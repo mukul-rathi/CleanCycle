@@ -3,7 +3,17 @@ version: '3'
 services: 
   endpoint:
     build: ./src
+    restart: always
     volumes:
       - ./src:/usr/src/app
     ports:
         - 5000:80
+  database:
+    image: postgres
+    restart: always
+    environment:
+        POSTGRES_DB: testdb
+        POSTGRES_PASSWORD: testpwd
+        POSTGRES_USER: testuser
+    ports:
+      - 5432:5432
