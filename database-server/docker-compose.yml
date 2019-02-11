@@ -1,0 +1,9 @@
+version: '3'
+
+services: 
+  endpoint:
+    build: ./src
+    volumes:
+      - ./src:/usr/src/app
+    ports:
+        - 5000:80
