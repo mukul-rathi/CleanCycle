@@ -219,12 +219,15 @@ public class Main {
                 int counter = 0;
                 double cumulative = 0;
 
+                Node node1 = nodes.get(edge.Node1ID);
+                Node node2 = nodes.get(edge.Node2ID);
+
                 /* Iterate through every point */
                 for (Point point : points) {
 
                     /* 0.0003 units at latitude 52 is about a 20 metre radius.
                      * We take the mean of all the pollution points in this radius, treating PM2.5 and PM10 as equally weighted. */
-                    if (pointToEdgeDistance(point, nodes.get(edge.Node1ID), nodes.get(edge.Node2ID)) < 0.0003) {
+                    if (pointToEdgeDistance(point, node1, node2) < 0.0003) {
                         cumulative += point.Pollution2_5 + point.Pollution10;
                         counter++;
                         numPoints++;
@@ -245,6 +248,8 @@ public class Main {
      * @param args the command line arguments of the program.
      */
     public static void main(String[] args) {
+        long start = System.currentTimeMillis();
+
         List<Point> points = getPointsFromBigCSV("data.csv");
 
         Map<Long, Node> nodes = new TreeMap<>();
@@ -252,5 +257,7 @@ public class Main {
         readDataFromJSON("map.json", nodes, edges);
 
         pointToEdge(points, edges, nodes);
+
+        System.out.println("Completed in " + (System.currentTimeMillis() - start) / 1000 + " seconds.");
     }
 }
