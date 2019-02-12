@@ -1,7 +1,4 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.text.DecimalFormat;
 import java.util.*;
 
@@ -247,7 +244,7 @@ public class Main {
      * The main function is currently used for testing purposes.
      * @param args the command line arguments of the program.
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         long start = System.currentTimeMillis();
 
         List<Point> points = getPointsFromBigCSV("data.csv");
@@ -259,5 +256,13 @@ public class Main {
         pointToEdge(points, edges, nodes);
 
         System.out.println("Completed in " + (System.currentTimeMillis() - start) / 1000 + " seconds.");
+
+        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("nodes.obj"));
+        oos.writeObject(nodes);
+        oos.close();
+
+        oos = new ObjectOutputStream(new FileOutputStream("edges.obj"));
+        oos.writeObject(edges);
+        oos.close();
     }
 }

@@ -1,7 +1,8 @@
+import java.io.Serializable;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class Node {
+public class Node implements Serializable {
     public final long ID;
     public final double Latitude;
     public final double Longitude;

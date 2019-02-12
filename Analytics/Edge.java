@@ -1,4 +1,6 @@
-public class Edge {
+import java.io.Serializable;
+
+public class Edge implements Serializable {
     public final long ID;
     /* These are the IDs of the nodes at each end of the edge. */
     public final long Node1ID;
