@@ -9,6 +9,8 @@ public class Node implements Serializable {
     /* Each adjacent edge entry is of the form <Neighbouring Node ID, Connecting Edge ID>. */
     public Map<Long, Long> Edges;
 
+    static final long serialVersionUID = 1L;
+
     public Node(long id_, double lat_, double long_) {
         ID = id_;
         Latitude = lat_;
