@@ -1,13 +1,13 @@
 import java.io.Serializable;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Node implements Serializable {
     public final long ID;
     public final double Latitude;
     public final double Longitude;
-    /* Each adjacent edge entry is of the form <Neighbouring Node ID, Connecting Edge ID>. */
-    public Map<Long, Long> Edges;
+    /* List of unique edge IDs connected to this node. */
+    public List<Long> Edges;
 
     static final long serialVersionUID = 1L;
 
@@ -15,6 +15,6 @@ public class Node implements Serializable {
         ID = id_;
         Latitude = lat_;
         Longitude = long_;
-        Edges = new TreeMap<>();
+        Edges = new ArrayList<>();
     }
 }

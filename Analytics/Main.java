@@ -87,8 +87,8 @@ public class Main {
     /**
      * Read in the OSM data from a JSON file. The two argument maps are filled with the results.
      * @param filename the name of the JSON file to be parsed.
-     * @param nodes the map of Node ID -> Node to be filled.
-     * @param edges the map of Edge ID -> List of edges with that ID to be filled.
+     * @param nodes the map of Node WayID -> Node to be filled.
+     * @param edges the map of Edge WayID -> List of edges with that WayID to be filled.
      */
     public static Map<Long, Node> readDataFromJSON(String filename, Map<Long, Node> nodes, Map<Long, List<Edge>> edges) {
 
@@ -117,34 +117,37 @@ public class Main {
             }
 
             /* The next pass finds all the edges in the JSON and appends them to the nodes at both ends of each edge.
-            For example, if we have an edge (1,2) with ID 3, then we store an entry with (node ID 2, edge ID 3) with node 1,
-            and (node ID 1, edge ID 3) with node 2.
+            For example, if we have an edge (1,2) with WayID 3, then we store an entry with (node WayID 2, edge WayID 3) with node 1,
+            and (node WayID 1, edge WayID 3) with node 2.
              */
             for (Object obj : array) {
                 JSONObject jobj = (JSONObject)obj;
 
                 String type = (String)jobj.get("type");
 
+                long currentEdgeID = 0;
+
                 if (type.equals("way")) {
-                    /* This is the ID of the edge */
-                    long id = (long)jobj.get("id");
+                    /* This is the WayID of the edge */
+                    long wayID = (long)jobj.get("id");
                     JSONArray subarray = (JSONArray)jobj.get("nodes");
 
-                    edges.put(id, new ArrayList<>());
+                    edges.put(wayID, new ArrayList<>());
 
                     /* For each part of the whole way */
                     for (int i = 0; i < subarray.size() - 1; i++) {
-                        /* For the nodes at each end of the edge, put a record pairing the neighbouring node and the edge ID
+                        /* For the nodes at each end of the edge, put a record pairing the neighbouring node and the edge WayID
                         into the node's Edges map. */
                         long node1 = (long)subarray.get(i);
                         long node2 = (long)subarray.get(i+1);
 
-                        nodes.get(node1).Edges.put(node2, id);
-                        nodes.get(node2).Edges.put(node1, id);
+                        nodes.get(node1).Edges.add(node2);
+                        nodes.get(node2).Edges.add(node1);
 
                         double distance = haversineDistance(nodes.get(node1), nodes.get(node2));
 
-                        edges.get(id).add(new Edge(id, node1, node2, distance));
+                        edges.get(wayID).add(new Edge(currentEdgeID, wayID, node1, node2, distance));
+                        currentEdgeID++;
                     }
                 }
             }
@@ -249,20 +252,27 @@ public class Main {
 
         List<Point> points = getPointsFromBigCSV("data.csv");
 
-        Map<Long, Node> nodes = new TreeMap<>();
-        Map<Long, List<Edge>> edges = new TreeMap<>();
+        Map<Long, Node> nodes = new HashMap<>();
+        Map<Long, List<Edge>> edges = new HashMap<>();
         readDataFromJSON("map.json", nodes, edges);
 
         pointToEdge(points, edges, nodes);
 
         System.out.println("Completed in " + (System.currentTimeMillis() - start) / 1000 + " seconds.");
 
+        Map<Long, Edge> edgeList = new HashMap<>();
+        for (long l : edges.keySet()) {
+            for (Edge e : edges.get(l)) {
+                edgeList.put(e.ID, e);
+            }
+        }
+
         ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("nodes.obj"));
         oos.writeObject(nodes);
         oos.close();
 
         oos = new ObjectOutputStream(new FileOutputStream("edges.obj"));
-        oos.writeObject(edges);
+        oos.writeObject(edgeList);
         oos.close();
     }
 }
