@@ -4,6 +4,7 @@ services:
   endpoint:
     build: ./src
     restart: always
+    env_file: database.env
     volumes:
       - ./src:/usr/src/app
     ports:
@@ -13,10 +14,7 @@ services:
   database:
     image: postgres
     restart: always
-    environment:
-        POSTGRES_DB: testdb
-        POSTGRES_PASSWORD: testpwd
-        POSTGRES_USER: testuser
+    env_file: database.env
     volumes:
       - ./data:/var/lib/postgresql/data
     ports:

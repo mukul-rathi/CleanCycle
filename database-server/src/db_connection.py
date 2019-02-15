@@ -1,11 +1,17 @@
 import psycopg2
 import json
+import os 
 
 class DBConnection:
     def __init__(self):
-        #set up connection
-        self._conn = psycopg2.connect("dbname=testdb user=testuser password=testpwd host=host.docker.internal port=5432")
-        self._cur = self._conn.cursor()
+      #set up connection
+      connectionParameters = "dbname=" + os.environ['POSTGRES_DB']
+      connectionParameters += " user=" + os.environ['POSTGRES_USER']
+      connectionParameters += " password=" + os.environ['POSTGRES_PASSWORD']
+      connectionParameters += " host=host.docker.internal port=5432"
+     
+      self._conn = psycopg2.connect(connectionParameters)
+      self._cur = self._conn.cursor()
 
     def createTable(self):
       self._cur.execute("CREATE TABLE test (id serial PRIMARY KEY, num integer, data varchar);")
