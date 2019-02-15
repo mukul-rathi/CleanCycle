@@ -1,0 +1,5 @@
+# ignore the IntelliJ project directory
+CleanCycle/.idea
+
+# ignore build directory
+CleanCycle/app/build

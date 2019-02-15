@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">CleanCycleGUI</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="places_api_base">https://nominatim.openstreetmap.org/search?format=json&amp;</string>
+    <string name="search_hint">Going somewhere?</string>
+</resources>
