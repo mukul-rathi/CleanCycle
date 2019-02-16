@@ -1,3 +1,4 @@
 CXX = g++
 make:
-	$(CXX) encode.cpp test.cpp -o test
+	$(shell mkdir -p ../build)
+	$(CXX) encode.cpp test.cpp -o ../build/test

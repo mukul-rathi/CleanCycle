@@ -59,16 +59,15 @@ unsigned char getBit(unsigned char *src, int index) {
 // each of the latitude, longitude, PM10 and PM25 arrays has to
 // be 8 elements in length, and the result array must be at least
 // 51 bytes in length
-// THIS FUNCTION WORKS ON LITTLE-ENDIAN SYSTEMS
 */
-void encode_LE(float *latitude, float *longitude, float *p10, float *p25, unsigned char *result) {
+void encode(float *latitude, float *longitude, float *p10, float *p25, unsigned char *result) {
     // the header is actually 34 bits, so we leave
     // the 6 LSBs of the last element empty
     char header[5] = {0, 0, 0, 0, 0};
 
     // the first 2 bits of this are empty, so we can
     // then OR the first byte of this and last byte of the header
-    char datapoints[47];
+    char datapoints[47] = {0};
 
     // set up the arrays to let us access the bytes in each float
     // set up arrays and convert the input floats into fixed-point integers
@@ -90,23 +89,32 @@ void encode_LE(float *latitude, float *longitude, float *p10, float *p25, unsign
       p25Ints[i] = (int) p25[i];
     }
 
-    // set up header
-    header[0] = latBytes[3];
-    header[1] = latBytes[2];
-    header[2] = (latBytes[1]>>7)<<7;
-    header[2] += longBytes[3]>>1;
-    header[3] = longBytes[3]<<7;
-    header[3] += longBytes[2]>>1;
-    header[4] = longBytes[2]<<7;
-    header[4] += (longBytes[1]>>7)<<6;
+    // find out if local system is little-endian or big-endian
+    // and adjust accordingly
+    unsigned int one = 1;
+    bool littleEndian = ((unsigned char *)(&one))[0] > 0;
+    int i0 = littleEndian ? 3 : 0;
+    int i1 = littleEndian ? 2 : 1;
+    int i2 = littleEndian ? 1 : 2;
 
+    // set up header
+    header[0] = latBytes[i0];
+    header[1] = latBytes[i1];
+    header[2] = (latBytes[i2]>>7)<<7;
+    header[2] += longBytes[i0]>>1;
+    header[3] = longBytes[i0]<<7;
+    header[3] += longBytes[i1]>>1;
+    header[4] = longBytes[i1]<<7;
+    header[4] += (longBytes[i2]>>7)<<6;
 
     // get the rest of the bits from the input into the datapoints array
     int byteIndex = 0;
     int bitIndex = 2;
+    int index = 0;
     for (int i = 0; i < 8; i++) {
       for (int j = 0; j < 11; j++) {
-        datapoints[byteIndex] += getBit(latBytes, (j+9)%16 + 32*i) << (7-bitIndex);
+        index = littleEndian ? (j+9)%16 + 32*i : j+17 + 32*i;
+        datapoints[byteIndex] += getBit(latBytes, index) << (7-bitIndex);
         bitIndex++;
         if (bitIndex > 7) {
           bitIndex = 0;
@@ -115,7 +123,8 @@ void encode_LE(float *latitude, float *longitude, float *p10, float *p25, unsign
       }
 
       for (int j = 0; j < 11; j++) {
-        datapoints[byteIndex] += getBit(longBytes, (j+9)%16 + 32*i) << (7-bitIndex);
+        index = littleEndian ? (j+9)%16 + 32*i : j+17 + 32*i;
+        datapoints[byteIndex] += getBit(longBytes, index) << (7-bitIndex);
         bitIndex++;
         if (bitIndex > 7) {
           bitIndex = 0;
@@ -124,7 +133,8 @@ void encode_LE(float *latitude, float *longitude, float *p10, float *p25, unsign
       }
 
       for (int j = 0; j < 10; j++) {
-        datapoints[byteIndex] += getBit(p10Bytes, (j+14)%16 + i*32) << (7-bitIndex);
+        index = littleEndian ? (j+14)%16 + i*32 : j+22 + i*32;
+        datapoints[byteIndex] += getBit(p10Bytes, index) << (7-bitIndex);
         bitIndex++;
         if (bitIndex > 7) {
           bitIndex = 0;
@@ -133,7 +143,8 @@ void encode_LE(float *latitude, float *longitude, float *p10, float *p25, unsign
       }
 
       for (int j = 0; j < 10; j++) {
-        datapoints[byteIndex] += getBit(p25Bytes, (j+14)%16 + i*32) << (7-bitIndex);
+        index = littleEndian ? (j+14)%16 + i*32 : j+22 + i*32;
+        datapoints[byteIndex] += getBit(p25Bytes, index) << (7-bitIndex);
         bitIndex++;
         if (bitIndex > 7) {
           bitIndex = 0;

@@ -24,10 +24,9 @@ unsigned char getBit(unsigned char *src, int index);
 // each of the latitude, longitude, PM10 and PM25 arrays has to
 // be 8 elements in length, and the result array must be at least
 // 51 bytes in length
-// THIS FUNCTION WORKS ON LITTLE-ENDIAN SYSTEMS
 */
-void encode_LE(float *latitude,
-               float *longitude,
-               float *p10,
-               float *p25,
-               unsigned char *result);
+void encode(float *latitude,
+            float *longitude,
+            float *p10,
+            float *p25,
+            unsigned char *result);
