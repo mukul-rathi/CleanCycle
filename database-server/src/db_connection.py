@@ -1,4 +1,5 @@
 import psycopg2
+from psycopg2 import sql
 import json
 import os 
 
@@ -29,4 +30,14 @@ class DBConnection:
 
     def getConnectionStats(self):
         return json.dumps(self._conn.get_dsn_parameters())
+
+  def getDBInfo(self): #print out all tables and their records
+    tables = {}
+    self._cur.execute("""SELECT table_name FROM information_schema.tables
+       WHERE table_schema = 'public'""") # this gets an iterable collection of the public tables in the database
+    for table in self._cur.fetchall():
+      cur2 = self._conn.cursor()
+      cur2.execute(sql.SQL("SELECT * FROM {} ;").format(sql.Identifier(table[0]))) # note sql module used for safe dynamic SQL queries 
+      tables[table[0]] =  cur2.fetchall()
+    return json.dumps(tables)
 
