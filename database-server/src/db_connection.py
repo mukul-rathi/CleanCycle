@@ -3,6 +3,26 @@ from psycopg2 import sql
 import json
 import os 
 
+
+columns = {
+    "position": ["uuid","AccX","AccY", "AccZ", "Acc_mag", "Altitude", "GyroX", "GyroY",	"GyroZ", "Gyro_mag", "Latitude", "Longitude", "Speed"],
+    "weather" : ["uuid","DewPt", "Humid", "MxWSpd", "Press", "Rain", "Sun", "Temp_CBS", "Temp_CL", "WindDr", "WindSp"],
+    "time" :["uuid","Date", "Counter","Millis", "Start", "Time"],
+    "system_status": ["uuid","BatteryVIN", "Satellites", "gpsUpdated", "nAcc"],
+    "air_quality" : ["uuid","Latitude", "Longitude", "PM10","PM2.5"]
+}
+
+schemas = {
+    "position": "(uuid TEXT PRIMARY KEY, AccX FLOAT8, AccY FLOAT8 , AccZ FLOAT8, Acc_mag FLOAT8, Altitude FLOAT8, GyroX FLOAT8, GyroY FLOAT8, GyroZ FLOAT8, Gyro_mag FLOAT8, Latitude FLOAT8, Longitude FLOAT8, Speed FLOAT8)",
+
+     "weather" : "(uuid TEXT PRIMARY KEY, DewPt INTEGER, Humid INTEGER, MxWSpd INTEGER, Press INTEGER, Rain INTEGER, Sun FLOAT8, Temp_CBS FLOAT8, Temp_CL FLOAT8, WindDr INTEGER, WindSp INTEGER)",
+
+    "time" : "(uuid TEXT PRIMARY KEY, Date INTEGER, Counter INTEGER,Millis INTEGER, Start TEXT, Time FLOAT8)",
+
+    "system_status": " (uuid TEXT PRIMARY KEY, BatteryVIN FLOAT8, Satellites INTEGER, gpsUpdated INTEGER, nAcc INTEGER)",
+
+    "air_quality" : "(uuid TEXT PRIMARY KEY, Latitude FLOAT8,  Longitude FLOAT8, PM10 FLOAT8, PM25 FLOAT8)"
+}
 class DBConnection:
     def __init__(self):
       #set up connection
