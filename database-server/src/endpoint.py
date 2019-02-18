@@ -11,9 +11,8 @@ def connectionStats():
 @app.route('/analytics', methods=['GET']) 
 def query():
     db = DBConnection()
-    return db.queryAll()
-@app.route('/sensors', methods=['GET', 'POST']) 
-def insert():
+    return db.queryAirPollution()
+
     db = DBConnection()
     db.insertItem()
     return "Inserted an item"

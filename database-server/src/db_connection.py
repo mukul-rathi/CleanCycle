@@ -30,13 +30,13 @@ schemas = {
 class DBConnection:
          
   def __init__(self, dbname=os.environ['POSTGRES_DB'], dbuser=os.environ['POSTGRES_USER'], dbpassword= os.environ['POSTGRES_PASSWORD'], hostname="host.docker.internal", port=5432):
-      #set up connection
+    #set up connection
     engineParams = f"postgresql+psycopg2://{dbuser}:{dbpassword}@{hostname}:{port}/{dbname}"
     self._engine = create_engine(engineParams)
     self._conn = self._engine.raw_connection()
     self._cur = self._conn.cursor()
 
-     
+
   def createSensorTables(self):
     self._cur.execute("CREATE TABLE position (uuid TEXT PRIMARY KEY, AccX FLOAT8, AccY FLOAT8 , AccZ FLOAT8, Acc_mag FLOAT8, Altitude FLOAT8, GyroX FLOAT8, GyroY FLOAT8, GyroZ FLOAT8, Gyro_mag FLOAT8, Latitude FLOAT8, Longitude FLOAT8, Speed FLOAT8)")
 
@@ -47,8 +47,8 @@ class DBConnection:
     self._cur.execute("CREATE TABLE system_status(uuid TEXT PRIMARY KEY, BatteryVIN FLOAT8, Satellites INTEGER, gpsUpdated INTEGER, nAcc INTEGER)")
     
     self._cur.execute("CREATE TABLE air_quality (uuid TEXT PRIMARY KEY, Latitude FLOAT8,  Longitude FLOAT8, PM10 FLOAT8, PM25 FLOAT8)")
-
-      self._conn.commit()
+    
+    self._conn.commit()
 
   def insertSensorData(self, csvFile):
     data = pd.read_csv(csvFile)
@@ -60,15 +60,16 @@ class DBConnection:
       table_df.to_csv(output, sep='\t', header=False, index=False)
       output.seek(0)
       self._cur.copy_from(output, table, null="") 
-      self._conn.commit()
+    self._conn.commit()
 
 
-    def queryAll(self):
-      self._cur.execute("SELECT * FROM test;")
-      return json.dumps(self._cur.fetchall())
+  def queryAirPollution(self):
+    self._cur.execute("SELECT Latitude, Longitude, PM10, PM25 FROM air_quality;")
+    return json.dumps(self._cur.fetchall())
 
-    def getConnectionStats(self):
-        return json.dumps(self._conn.get_dsn_parameters())
+  def getConnectionStats(self):
+      return json.dumps(self._conn.get_dsn_parameters())
+
 
   def getDBInfo(self): #print out all tables and their records
     tables = {}
@@ -77,6 +78,6 @@ class DBConnection:
     for table in self._cur.fetchall():
       cur2 = self._conn.cursor()
       cur2.execute(sql.SQL("SELECT * FROM {} ;").format(sql.Identifier(table[0]))) # note sql module used for safe dynamic SQL queries 
-      tables[table[0]] =  cur2.fetchall()
+      tables[table[0]] =  cur2.fetchall() 
     return json.dumps(tables)
 
