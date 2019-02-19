@@ -19,14 +19,15 @@ columns = {
 schemas = {
     "position": "(uuid TEXT PRIMARY KEY, AccX FLOAT8, AccY FLOAT8 , AccZ FLOAT8, Acc_mag FLOAT8, Altitude FLOAT8, GyroX FLOAT8, GyroY FLOAT8, GyroZ FLOAT8, Gyro_mag FLOAT8, Latitude FLOAT8, Longitude FLOAT8, Speed FLOAT8)",
 
-     "weather" : "(uuid TEXT PRIMARY KEY, DewPt INTEGER, Humid INTEGER, MxWSpd INTEGER, Press INTEGER, Rain INTEGER, Sun FLOAT8, Temp_CBS FLOAT8, Temp_CL FLOAT8, WindDr INTEGER, WindSp INTEGER)",
+     "weather" : "(uuid TEXT PRIMARY KEY, DewPt FLOAT8, Humid FLOAT8, MxWSpd FLOAT8, Press FLOAT8, Rain FLOAT8, Sun FLOAT8, Temp_CBS FLOAT8, Temp_CL FLOAT8, WindDr FLOAT8, WindSp FLOAT8)",
 
-    "time" : "(uuid TEXT PRIMARY KEY, Date INTEGER, Counter INTEGER,Millis INTEGER, Start TEXT, Time FLOAT8)",
+    "time" : "(uuid TEXT PRIMARY KEY, Date FLOAT8, Counter FLOAT8,Millis FLOAT8, Start TEXT, Time FLOAT8)",
 
-    "system_status": " (uuid TEXT PRIMARY KEY, BatteryVIN FLOAT8, Satellites INTEGER, gpsUpdated INTEGER, nAcc INTEGER)",
+    "system_status": " (uuid TEXT PRIMARY KEY, BatteryVIN FLOAT8, Satellites FLOAT8, gpsUpdated FLOAT8, nAcc FLOAT8)",
 
     "air_quality" : "(uuid TEXT PRIMARY KEY, Latitude FLOAT8,  Longitude FLOAT8, PM10 FLOAT8, PM25 FLOAT8)"
 }
+
 class DBConnection:
          
   def __init__(self, dbname=os.environ['POSTGRES_DB'], dbuser=os.environ['POSTGRES_USER'], dbpassword= os.environ['POSTGRES_PASSWORD'], hostname="host.docker.internal", port=5432):
