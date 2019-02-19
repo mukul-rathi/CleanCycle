@@ -2,6 +2,12 @@ from flask import Flask
 app = Flask(__name__)
 from db_connection import DBConnection
 
+def bootstrap():
+    db = DBConnection()
+    db.createSensorTables()
+    db.insertSensorData('241018.csv')
+
+
 
 @app.route('/', methods=['GET']) 
 def connectionStats():
@@ -13,21 +19,18 @@ def query():
     db = DBConnection()
     return db.queryAirPollution()
 
+@app.route('/insertSensorData', methods=['GET', 'POST']) 
+def insertSensorData():
     db = DBConnection()
-    db.insertItem()
-    return "Inserted an item"
-
-@app.route('/createTable', methods=['GET', 'POST']) 
-def createTable():
-    db = DBConnection()
-    db.createTable()
-    return "Created an table"
-
-
+    db.insertSensorData('test.csv')
+    return db.getDBInfo()
   
 @app.route('/info', methods=['GET']) 
 def test():
     db = DBConnection()
     return db.getDBInfo()
+
+
 if __name__ == '__main__':
+    bootstrap()
     app.run(debug=True,host='0.0.0.0', port=80)
