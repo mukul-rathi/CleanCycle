@@ -12,6 +12,7 @@
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        app:layout_constraintTop_toBottomOf="@id/autocomplete_fragment"
         tools:context=".MapsActivity" />
 
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
@@ -21,6 +22,7 @@
         android:name="uk.ac.cam.cl.cleancyclegui.DashboardFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        app:layout_constraintTop_toBottomOf="@id/autocomplete_fragment"
         tools:context=".MainActivity" />
 
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
@@ -30,7 +32,15 @@
         android:name="uk.ac.cam.cl.cleancyclegui.NotificationsFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        app:layout_constraintTop_toBottomOf="@id/autocomplete_fragment"
         tools:context=".MainActivity" />
+
+    <fragment android:id="@+id/autocomplete_fragment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@id/map"
+        android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"
+        />
 
     <android.support.design.widget.BottomNavigationView
         android:id="@+id/navigation"
