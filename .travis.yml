@@ -1,8 +1,11 @@
 sudo: required
-language: python
-python: 3.6
+language: java
+install: true
+jdk: oraclejdk8
+
 
 services:
     - docker
 script:
   - docker ps -a
+  - ./gradlew build --scan -s
