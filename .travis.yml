@@ -7,5 +7,4 @@ jdk: oraclejdk8
 services:
     - docker
 script:
-  - docker ps -a
-  - if [ -f "./build.gradle" ]; then gradle check; fi
+  - bash test-script.sh
