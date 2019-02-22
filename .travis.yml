@@ -8,4 +8,4 @@ services:
     - docker
 script:
   - docker ps -a
-  - ./gradlew build --scan -s
+  - if [ -f "./build.gradle"] then gradle check else echo "No build.gradle file" fi
