@@ -1,15 +1,32 @@
+package CleanCycle.Analytics;
+
 import java.io.*;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 import java.text.DecimalFormat;
 import java.util.*;
 
-import com.sun.glass.ui.Size;
 import org.json.simple.*;
 import org.json.simple.parser.*;
 
 public class Main {
+    public static boolean unitTestValidEdges(Map<Long, Node> nodes, Map<Long, Edge> edges) {
+        boolean result = true;
+
+        for (Long edgeID : edges.keySet()) {
+            Edge edge = edges.get(edgeID);
+            if (!nodes.keySet().contains(edge.Node1ID))
+                result = false;
+            if (!nodes.keySet().contains(edge.Node2ID))
+                result = false;
+        }
+
+        return result;
+    }
+
+    public static int unitTestSingleComponent(Map<Long, Node> nodes, Map<Long, Edge> edges) {
+        return getComponents(nodes, edges).size();
+    }
+
     /**
      * This function uses the haversine formula to calculate the great circle distance in metres between two nodes.
      *
@@ -243,6 +260,41 @@ public class Main {
         System.out.println("Average number of points per edge: " + (double) numPoints / numEdges);
     }
 
+    /**
+     * This function will load the set of points from the database
+     * @param points the list of points to be parsed into
+     */
+    static void loadPointsFromDatabase(List<Point> points) {
+        try {
+            points.clear();
+
+            HttpURLConnection connection = ((HttpURLConnection) new URL("http://localhost:5000/analytics").openConnection());
+            connection.setRequestMethod("GET");
+            int responseCode = connection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                BufferedReader inReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                StringBuilder jsonStringBuilder = new StringBuilder();
+                String line;
+                while ((line = inReader.readLine()) != null) {
+                    jsonStringBuilder.append(line).append("\n");
+                }
+
+                String jsonString = jsonStringBuilder.toString();
+
+                JSONParser parser = new JSONParser();
+
+                JSONArray bigArray = (JSONArray)parser.parse(jsonString);
+
+                // TODO: Finish this
+            }
+        }
+
+        catch(IOException | ParseException e) {
+            System.out.println("There was a problem getting point data from the database:");
+            e.printStackTrace();
+        }
+    }
+
     static class SizeComparator implements Comparator<Set<?>> {
 
         @Override
@@ -256,13 +308,14 @@ public class Main {
     static final List<Point> points = new ArrayList<>();
 
     /**
-     * The main function is currently used for testing purposes.
+     * The main function is the main thread of the module.
      *
      * @param args the command line arguments of the program.
      */
     public static void main(String[] args) throws IOException {
 
-        /* Pull data from database here */
+        /* loadPointsFromDatabase(points); */
+
         getPointsFromBigCSV("data.csv", points);
 
         readDataFromJSON("map.json", nodes, edges);
@@ -382,11 +435,18 @@ public class Main {
         /* The original thread loops, refreshing the data set every ten minutes. */
 
         while (true) {
+            try {
+                Thread.sleep(1000 * 60 * 10);
+            } catch (InterruptedException e) {
+                System.out.println("The data refresh thread was interrupted.");
+                e.printStackTrace();
+            }
+
             Map<Long, Node> newNodes = new HashMap<>(nodes);
             Map<Long, Edge> newEdges = new HashMap<>(edges);
 
             synchronized (points) {
-                /* Query new data from database */
+                // loadPointsFromDatabase(points);
             }
 
             pointToEdge(points, newEdges, newNodes);
@@ -403,13 +463,6 @@ public class Main {
                     }
                 }
             }
-
-            try {
-                Thread.sleep(1000 * 60 * 10);
-            } catch (InterruptedException e) {
-                System.out.println("The data refresh thread was interrupted.");
-                e.printStackTrace();
-            }
         }
     }
 
@@ -420,7 +473,7 @@ public class Main {
     static final Set<Long> visited = new HashSet<>();
     static final Set<Long> tempVisited = new HashSet<>();
 
-    static void dfs(Long src) {
+    static void dfs(Long src, Map<Long, Node> nodes, Map<Long, Edge> edges) {
         tempVisited.add(src);
         visited.add(src);
 
@@ -431,22 +484,23 @@ public class Main {
             Edge curEdge = edges.get(edgeID);
             Long xt = curEdge.Node1ID + curEdge.Node2ID - src;
             if (visited.contains(xt)) return;
-            dfs(xt);
+            dfs(xt, nodes, edges);
         });
-
     }
 
     static List<Set<Long>> getComponents (Map<Long, Node> nodes, Map<Long, Edge> edges) {
         List<Set<Long>> components = new ArrayList<>();
+        visited.clear();
 
         nodes.forEach((nodeID, node) -> {
             if (visited.contains(nodeID)) return;
 
             tempVisited.clear();
-            dfs(nodeID);
+            dfs(nodeID, nodes, edges);
             components.add(new HashSet<>(tempVisited));
         });
 
         return components;
     }
+
 }
