@@ -1,12 +1,13 @@
 import psycopg2
 from psycopg2 import sql
+import sqlalchemy
 from sqlalchemy import create_engine
 import json
 import os 
 import pandas as pd
 import uuid 
 import io
-
+import time
 
 columns = {
     "position": ["uuid","AccX","AccY", "AccZ", "Acc_mag", "Altitude", "GyroX", "GyroY",	"GyroZ", "Gyro_mag", "Latitude", "Longitude", "Speed"],
@@ -30,12 +31,20 @@ schemas = {
 
 class DBConnection:
          
-  def __init__(self, dbname=os.environ['POSTGRES_DB'], dbuser=os.environ['POSTGRES_USER'], dbpassword= os.environ['POSTGRES_PASSWORD'], hostname="host.docker.internal", port=5432):
+  def __init__(self, dbname=os.environ['POSTGRES_DB'], dbuser=os.environ['POSTGRES_USER'], dbpassword= os.environ['POSTGRES_PASSWORD'], hostname="host.docker.internal", port=5001):
     #set up connection
     engineParams = f"postgresql+psycopg2://{dbuser}:{dbpassword}@{hostname}:{port}/{dbname}"
-    self._engine = create_engine(engineParams)
-    self._conn = self._engine.raw_connection()
-    self._cur = self._conn.cursor()
+    exponentialBackoff = 1 #the number of seconds to wait between retrying connection
+    while True:
+      try:
+        self._engine = create_engine(engineParams)
+        self._conn = self._engine.raw_connection()
+        self._cur = self._conn.cursor()
+        break
+      except (sqlalchemy.exc.OperationalError, psycopg2.OperationalError):
+        time.sleep(exponentialBackoff)
+        exponentialBackoff*=2
+
 
 
   def createSensorTables(self):
