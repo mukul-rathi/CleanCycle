@@ -1,10 +1,6 @@
 #!/bin/bash
 
-if [ -f "./build.gradle" ] # run gradle if present
-    then gradle check
-else
-    echo "No Gradle installed"
-fi 
+gradle build 
 
 
 if [ -f "./database-server/docker-compose.yml" ] 
