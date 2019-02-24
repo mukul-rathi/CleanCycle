@@ -1,11 +1,7 @@
 from flask import Flask
 app = Flask(__name__)
 from db_connection import DBConnection
-
-def bootstrap():
-    db = DBConnection()
-    db.createSensorTables()
-    db.insertSensorData('241018.csv')
+from bootstrap import bootstrap
 
 
 
