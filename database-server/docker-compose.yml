@@ -4,7 +4,7 @@ services:
   endpoint:
     build: ./src
     restart: always
-    env_file: database.env
+    env_file: ./database.env
     volumes:
       - ./src:/usr/src/app
     ports:
@@ -14,7 +14,7 @@ services:
   database:
     image: postgres
     restart: always
-    env_file: database.env
+    env_file: ./database.env
     volumes:
       - ./data:/var/lib/postgresql/data
     ports:

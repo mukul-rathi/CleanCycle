@@ -1,0 +1,1 @@
+echo "POSTGRES_DB=testdb POSTGRES_USER=testuser POSTGRES_PASSWORD=testpassword" > ./database-server/database.env

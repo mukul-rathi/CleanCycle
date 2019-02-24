@@ -6,5 +6,6 @@ RUN mkdir -p /usr/backups
 COPY ./backups /usr/backups
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
+RUN printenv 
 CMD [ "python", "./endpoint.py" ]
 

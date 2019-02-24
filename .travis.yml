@@ -5,6 +5,10 @@ jdk: oraclejdk8
 
 services:
     - docker
+
+before_script:
+  - bash set-up-test-env.sh
+  
 script:
   - bash test-script.sh
 
