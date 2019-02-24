@@ -1,49 +1,48 @@
 #include <iostream>
+#include <fstream>
 #include <cstring>
 #include <bitset>
-#include <stdio.h>
 #include "encode.h"
+#include <boost/algorithm/string.hpp>
 
 // used to test the functions declared in encode.h
 int main(void) {
+  float testNumsLat[1024];
+  float testNumsLong[1024];
+  float testNumsPm10[1024];
+  float testNumsPm25[1024];
+  unsigned char encoded[51*(1024/8)];
 
-  int numbers1[8] = {89477820, 89478092, 89478832, 89477204, 89477950, 89477159, 89478252, 89478806};
-  float fnums1[8] = {10.666587352752686, 10.666619777679443, 10.666707992553711, 10.666513919830322, 10.666602849960327, 10.666508555412292, 10.666638851165771, 10.666704893112183};
-  int numbers2[8] = {89477639, 89477972, 89477530, 89479021, 89478082, 89477445, 89477206, 89477298};
-  float fnums2[8] = {10.666565775871277, 10.666605472564697, 10.666552782058716, 10.666730523109436, 10.666618585586548, 10.666542649269104, 10.666514158248901, 10.66652512550354};
-  int numbers3[8] = {800, 779, 830, 835, 799, 795, 700, 700};
-  float fnums3[8] = {800, 779, 830, 835, 799, 795, 700, 700};
-  int numbers4[8] = {124, 135, 120, 80, 85, 79, 65, 70};
-  float fnums4[8] = {124, 135, 120, 80, 85, 79, 65, 70};
-  unsigned char res[51];
+  std::ifstream file;
+  file.open("../inputs.txt");
 
-  std::cout << "test" << std::endl;
-
-
-  for (int i = 0; i < 8; i++) {
-    std::cout << std::bitset<32>(numbers1[i]) << std::endl;
-    std::cout << std::bitset<32>(numbers2[i]) << std::endl;
-    std::cout << std::bitset<32>(numbers3[i]) << std::endl;
-    std::cout << std::bitset<32>(numbers4[i]) << std::endl;
+  if (!file) {
+    std::cout << "error opening file" << std::endl;
+    return -1;
   }
 
+  std::string line;
+  std::vector<std::string> lineSplit;
+  int counter = 0;
+  while (getline(file, line) && counter < 1024) {
+    lineSplit = boost::split(lineSplit, line, [](char c){ return c == ',';});
+    testNumsLat[counter] = std::stof(lineSplit[0]);
+    testNumsLong[counter] = std::stof(lineSplit[1]);
+    testNumsPm10[counter] = std::stof(lineSplit[2]);
+    testNumsPm25[counter] = std::stof(lineSplit[3]);
+    counter++;
+  }
 
-  encode(fnums1, fnums2, fnums3, fnums4, res);
+  for (int i = 0; i < 1024/8; i++) {
+    encode(&testNumsLat[8*i],
+           &testNumsLong[8*i],
+           &testNumsPm10[8*i],
+           &testNumsPm25[8*i],
+           &encoded[51*i]);
 
-  std::cout << "1234567890123456789012345678901234567890123456789" << std::endl;
-  for (int i = 0; i < 51; i++) {
-    std::cout << std::bitset<8>(res[i]);
-    if (i%6 == 5) {
-      std::cout << std::endl;
+    for (int j = 0; j < 51; j++) {
+        std::cout << std::bitset<8>(encoded[51*i + j]);
     }
+    std::cout << std::endl;
   }
-  std::cout << std::endl;
-
-
-  /*
-  for (int i = 0; i < 8; i++) {
-    printf("%.10f\n", fnums1[i]);
-    printf("%.10f\n", intToLatlong(latlongToInt(fnums1[i]))-180);
-  }
-  */
 }
