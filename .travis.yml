@@ -2,15 +2,12 @@ sudo: required
 language: java
 install: true
 jdk: oraclejdk8
-
 services:
-    - docker
-
-before_script:
-  - bash set-up-test-env.sh
-  
+- docker
 script:
-  - bash test-script.sh
-
+- bash test-script.sh
 notifications:
   slack: cleancycle:5lF8hEqYZvrw9XflPC3eG2GD
+before_install:
+- openssl aes-256-cbc -K $encrypted_8a0a8349c0e8_key -iv $encrypted_8a0a8349c0e8_iv
+  -in database.env.enc -out database-server/database.env -d
