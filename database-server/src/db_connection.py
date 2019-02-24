@@ -8,6 +8,7 @@ import pandas as pd
 import uuid 
 import io
 import time
+from random import randint
 
 columns = {
     "position": ["uuid","AccX","AccY", "AccZ", "Acc_mag", "Altitude", "GyroX", "GyroY",	"GyroZ", "Gyro_mag", "Latitude", "Longitude", "Speed"],
@@ -42,7 +43,7 @@ class DBConnection:
         self._cur = self._conn.cursor()
         break
       except (sqlalchemy.exc.OperationalError, psycopg2.OperationalError):
-        time.sleep(exponentialBackoff)
+        time.sleep(randint(0,exponentialBackoff))
         exponentialBackoff*=2
 
 
