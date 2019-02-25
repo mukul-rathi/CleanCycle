@@ -17,11 +17,11 @@ def query():
     db = DBConnection()
     return db.queryAirPollution()
 
-@app.route('/insertSensorData', methods=['GET', 'POST']) 
-def insertSensorData():
-    db = DBConnection()
-    db.insertSensorData('test.csv')
-    return db.getDBInfo()
+#@app.route('/insertSensorData', methods=['GET', 'POST']) 
+#def insertSensorData():
+ #   db = DBConnection()
+  #  db.insertSensorData('test.csv')
+   # return db.getDBInfo()
   
 @app.route('/info', methods=['GET']) 
 def test():
