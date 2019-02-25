@@ -3,8 +3,7 @@ version: '3'
 services: 
   endpoint:
     build: ./src
-    restart: always
-    env_file: ./database.env
+    env_file: ./test.env
     volumes:
       - ./src:/usr/src/app
     ports:
@@ -14,11 +13,7 @@ services:
   database:
     image: postgres
     restart: always
-    env_file: ./database.env
-    volumes:
-      - ./data:/var/lib/postgresql/data
-    ports:
-      - 5001:5432
+    env_file: ./test.env 
   test:
     build: ./tests
     depends_on:
@@ -27,4 +22,4 @@ services:
     volumes:
       - ./tests:/usr/src/app
       - ./src:/usr/src/app/src-code
-    command: ["./wait-for-it.sh", "endpoint:5000", "--timeout=30","--","pytest"]
+    env_file: ./test.env

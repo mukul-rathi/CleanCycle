@@ -22,3 +22,7 @@ gradle-app.setting
 
 ### Gradle Patch ###
 **/build/
+
+
+#Ignore pytest output
+.pytest_cache/

@@ -10,4 +10,4 @@ notifications:
   slack: cleancycle:5lF8hEqYZvrw9XflPC3eG2GD
 before_install:
 - openssl aes-256-cbc -K $encrypted_8a0a8349c0e8_key -iv $encrypted_8a0a8349c0e8_iv
-  -in database.env.enc -out database-server/database.env -d
+  -in test.env.enc -out database-server/test.env -d

@@ -2,6 +2,7 @@
 from db_connection import DBConnection
 import os 
 import glob
+from endpoint import runEndpoint
 
 def bootstrap():
     print("Beginning bootstrap procedure...")
@@ -15,3 +16,7 @@ def bootstrap():
     for csvFile in glob.glob('/usr/backups/*.csv'):
       db.insertSensorData(csvFile)
     print("Bootstrap procedure complete")
+
+if __name__ == '__main__':
+  bootstrap()
+  runEndpoint()

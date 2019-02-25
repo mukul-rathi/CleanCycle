@@ -2,7 +2,7 @@
 
 gradle build 
 
-docker-compose -f database-server/tests.yml build
-docker-compose -f database-server/tests.yml run test
+docker-compose -f database-server/docker-tests.yml build
+docker-compose -f database-server/docker-tests.yml run test
 
 

@@ -1,7 +1,6 @@
 from flask import Flask
 from flask_cors import CORS
 from db_connection import DBConnection
-from bootstrap import bootstrap
 
 
 
@@ -30,6 +29,5 @@ def test():
     return db.getDBInfo()
 
 
-if __name__ == '__main__':
-    bootstrap()
+def runEndpoint():
     app.run(debug=True,host='0.0.0.0', port=80)
