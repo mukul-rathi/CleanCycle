@@ -32,7 +32,7 @@ schemas = {
 
 class DBConnection:
          
-  def __init__(self, dbname=os.environ['POSTGRES_DB'], dbuser=os.environ['POSTGRES_USER'], dbpassword= os.environ['POSTGRES_PASSWORD'], hostname="host.docker.internal", port=5001):
+  def __init__(self, dbname=os.environ['POSTGRES_DB'], dbuser=os.environ['POSTGRES_USER'], dbpassword= os.environ['POSTGRES_PASSWORD'], hostname="database", port=5432):
     #set up connection
     engineParams = f"postgresql+psycopg2://{dbuser}:{dbpassword}@{hostname}:{port}/{dbname}"
     exponentialBackoff = 1 #the number of seconds to wait between retrying connection
