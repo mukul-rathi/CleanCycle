@@ -283,9 +283,13 @@ public class Main {
 
                 JSONParser parser = new JSONParser();
 
-                JSONArray bigArray = (JSONArray)parser.parse(jsonString);
+                JSONArray bigArray = (JSONArray)parser.parse(jsonString); // "new FileReader(filename)" for file, jsonString for string
 
-                // TODO: Finish this
+                for (Object obj : bigArray) {
+                    JSONArray littleArray = (JSONArray)obj;
+
+                    points.add(new Point((double)littleArray.get(0), (double)littleArray.get(1), (double)littleArray.get(2), (double)littleArray.get(3)));
+                }
             }
         }
 
@@ -314,9 +318,9 @@ public class Main {
      */
     public static void main(String[] args) throws IOException {
 
-        /* loadPointsFromDatabase(points); */
+        loadPointsFromDatabase(points);
 
-        getPointsFromBigCSV("data.csv", points);
+        /* getPointsFromBigCSV("data.csv", points); */
 
         readDataFromJSON("map.json", nodes, edges);
 
@@ -446,7 +450,7 @@ public class Main {
             Map<Long, Edge> newEdges = new HashMap<>(edges);
 
             synchronized (points) {
-                // loadPointsFromDatabase(points);
+                loadPointsFromDatabase(points);
             }
 
             pointToEdge(points, newEdges, newNodes);
