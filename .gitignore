@@ -1,3 +1,9 @@
+*.csv
+*.json
+.idea/
+*.iml
+out/
+*.obj
 # Ignore Gradle project-specific cache directory
 .gradle
 
