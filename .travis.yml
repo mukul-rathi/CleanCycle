@@ -5,11 +5,12 @@ jdk: oraclejdk8
 services:
 - docker
 script:
-
-  - gradle build 
-  - docker-compose -f database-server/docker-tests.yml build
-  - docker-compose -f database-server/docker-tests.yml run test
-
+- cp database-server/tests/test.csv database-server/src/backups
+- docker-compose -f database-server/docker-tests.yml build && docker-compose -f database-server/docker-tests.yml
+  up -d #run endpoint for integration test with analytics
+- database-server/tests/wait-for-it.sh "localhost:5000" --timeout=120 -- gradle build #run gradle build so long as the endpoint is ready
+- docker-compose -f database-server/docker-tests.yml down -v #shut down endpoint and start afresh for unit tests
+- docker-compose -f database-server/docker-tests.yml run test
 notifications:
   slack: cleancycle:5lF8hEqYZvrw9XflPC3eG2GD
 before_install:

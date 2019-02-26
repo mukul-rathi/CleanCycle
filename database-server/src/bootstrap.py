@@ -12,6 +12,8 @@ def bootstrap():
     db.createSensorTables()
     print("Created database tables")
 
+    #clear any lingering data and start afresh
+    db.clearData()
     # iterate through backup csv folder and add them to database
     for csvFile in glob.glob('/usr/backups/*.csv'):
       db.insertSensorData(csvFile)

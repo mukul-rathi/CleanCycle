@@ -35,3 +35,17 @@ gradle-app.setting
 
 #Allow test csv file to be used for testing
 !database-server/tests/test.csv
+
+#Ignore VS Code config
+.classpath
+.project
+.settings/
+bin/#Ignore VS Code config
+.classpath
+.project
+.settings/
+bin/#Ignore VS Code config
+.classpath
+.project
+.settings/
+bin/
