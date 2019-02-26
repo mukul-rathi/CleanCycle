@@ -26,3 +26,6 @@ gradle-app.setting
 
 #Ignore pytest output
 .pytest_cache/
+
+#Allow test csv file to be used for testing
+!database-server/tests/test.csv

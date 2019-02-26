@@ -63,8 +63,10 @@ class DBConnection:
 
   def insertSensorData(self, csvFile):
     data = pd.read_csv(csvFile)
-    #generate unique uid for each measurement
-    data["uuid"] = [uuid.uuid4().hex for _ in range(data.shape[0])]
+    #generate unique uid for each measurement if not there
+    if("uuid" not in data.columns):
+      data["uuid"] = [uuid.uuid4().hex for _ in range(data.shape[0])]
+      data.to_csv(csvFile)
     for table in columns.keys():
       table_df = data[columns[table]]
       output = io.StringIO()
@@ -91,4 +93,12 @@ class DBConnection:
       cur2.execute(sql.SQL("SELECT * FROM {} ;").format(sql.Identifier(table[0]))) # note sql module used for safe dynamic SQL queries 
       tables[table[0]] =  cur2.fetchall() 
     return json.dumps(tables)
+
+  def clearData(self):
+    self._cur.execute("""SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'""") # this gets an iterable collection of the public tables in the database        
+    for table in self._cur.fetchall():
+        cur2 = self._conn.cursor()
+        cur2.execute(sql.SQL("DELETE FROM {} ;").format(sql.Identifier(table[0]))) # note sql module used for safe dynamic SQL queries 
+    self._conn.commit()
+
 
