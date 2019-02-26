@@ -1,11 +1,13 @@
 package CleanCycle.Analytics;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class AnalyticsTest {
     private void writeJSONMap() {
@@ -89,7 +91,7 @@ public class AnalyticsTest {
 
         Main.loadPointsFromDatabase(points);
 
-        Assertions.assertTrue(points.size() > 100000, "Database pull error, only found " + points.size() + " points, should have been ~130k.");
+        assertTrue("Database pull error, only found " + points.size() + " points, should have been ~130k.", points.size() > 100000);
     }
 
     @Test public void testJSONMapNodeCount() {
@@ -100,7 +102,7 @@ public class AnalyticsTest {
 
         Main.readDataFromJSON("testMap.json", nodes, edges);
 
-        Assertions.assertEquals(7, nodes.size(), "Incorrect number of nodes, should be 7, found " + nodes.size() + ".");
+        assertEquals("Incorrect number of nodes, should be 7, found " + nodes.size() + ".", 7, nodes.size());
     }
 
     @Test public void testJSONMapEdgeCount() {
@@ -111,7 +113,7 @@ public class AnalyticsTest {
 
         Main.readDataFromJSON("testMap.json", nodes, edges);
 
-        Assertions.assertEquals(5, edges.size(), "Incorrect number of edges, should be 5, found " + edges.size() + ".");
+        assertEquals("Incorrect number of edges, should be 5, found " + edges.size() + ".", 5, edges.size());
     }
 
     @Test public void testComponentElimination() {
@@ -147,7 +149,7 @@ public class AnalyticsTest {
         }
 
         int componentCount = Main.getComponents(nodes, edges).size();
-        Assertions.assertEquals(1, componentCount, "Unexpected number of components: " + componentCount);
+        assertEquals("Unexpected number of components: " + componentCount, 1, componentCount);
     }
 
     @Test public void testValidEdges() {
@@ -194,6 +196,6 @@ public class AnalyticsTest {
                 testResult = false;
         }
 
-        Assertions.assertTrue(testResult, "Invalid edges exist");
+        assertTrue("Invalid edges exist", testResult);
     }
 }
