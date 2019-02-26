@@ -6,6 +6,7 @@ jdk: oraclejdk8
 services:
     - docker
 script:
+  - gradle build 
   - bash test-script.sh
 
 notifications:
