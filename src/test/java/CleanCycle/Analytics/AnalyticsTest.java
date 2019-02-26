@@ -117,6 +117,7 @@ public class AnalyticsTest {
     }
 
     @Test public void testComponentElimination() {
+
         final Map<Long, Node> nodes = new HashMap<>();
         final Map<Long, Edge> edges = new HashMap<>();
         final List<Point> points = new ArrayList<>();
@@ -166,6 +167,8 @@ public class AnalyticsTest {
         Collections.sort(components, new Main.SizeComparator());
         Collections.reverse(components);
         Set<Long> IDsOfMainComponent = components.get(0);
+
+        /* Now we remove all nodes and edges that reference non-main components */
 
         Iterator nodeIt = nodes.keySet().iterator();
         while (nodeIt.hasNext()) {

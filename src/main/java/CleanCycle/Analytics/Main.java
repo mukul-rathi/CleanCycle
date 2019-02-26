@@ -9,6 +9,23 @@ import org.json.simple.*;
 import org.json.simple.parser.*;
 
 public class Main {
+    public static boolean unitTestValidEdges(Map<Long, Node> nodes, Map<Long, Edge> edges) {
+        boolean result = true;
+
+        for (Long edgeID : edges.keySet()) {
+            Edge edge = edges.get(edgeID);
+            if (!nodes.keySet().contains(edge.Node1ID))
+                result = false;
+            if (!nodes.keySet().contains(edge.Node2ID))
+                result = false;
+        }
+
+        return result;
+    }
+
+    public static int unitTestSingleComponent(Map<Long, Node> nodes, Map<Long, Edge> edges) {
+        return getComponents(nodes, edges).size();
+    }
 
     /**
      * This function uses the haversine formula to calculate the great circle distance in metres between two nodes.
