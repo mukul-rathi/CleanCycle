@@ -1,8 +1,5 @@
 #!/bin/bash
 
-gradle build 
-
-
 if [ -f "./database-server/docker-compose.yml" ] 
     then 
     echo "POSTGRES_DB=testdb POSTGRES_USER=test 
