@@ -1,3 +1,8 @@
+*.env 
+__pycache__/
+database-server/data/
+.DS_Store
+*.csv
 # Ignore Gradle project-specific cache directory
 .gradle
 
@@ -6,7 +11,6 @@ build/
 
 # Ignore Gradle GUI config
 gradle-app.setting
-
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
 !gradle-wrapper.jar
 
@@ -18,3 +22,10 @@ gradle-app.setting
 
 ### Gradle Patch ###
 **/build/
+
+
+#Ignore pytest output
+.pytest_cache/
+
+#Allow test csv file to be used for testing
+!database-server/tests/test.csv

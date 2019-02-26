@@ -1,0 +1,6 @@
+pandas==0.22.0
+numpy==1.14.0
+Flask==0.12.2
+Flask-Cors==3.0.3
+psycopg2-binary==2.7.7
+SQLAlchemy==1.2.18
