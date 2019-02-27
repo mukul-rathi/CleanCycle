@@ -11,7 +11,7 @@ COPY src/test/java/CleanCycle/Analytics ./src/test/java/CleanCycle/Analytics/
 #Copy boot up bash scripts 
 COPY ./analytics.sh ./ 
 
-COPY ./map.json* ./
+COPY ./*map.json ./
 
 USER root
 CMD ["./analytics.sh"] 
