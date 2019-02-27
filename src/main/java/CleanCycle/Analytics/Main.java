@@ -1,32 +1,34 @@
 package CleanCycle.Analytics;
 
-import java.io.*;
-import java.net.*;
-import java.text.DecimalFormat;
-import java.util.*;
+import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.PrintWriter;
+import java.io.InputStreamReader;
+import java.io.ObjectOutputStream;
 
-import org.json.simple.*;
-import org.json.simple.parser.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.Socket;
+import java.net.ServerSocket;
+
+import java.text.DecimalFormat;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.Iterator;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 public class Main {
-    public static boolean unitTestValidEdges(Map<Long, Node> nodes, Map<Long, Edge> edges) {
-        boolean result = true;
-
-        for (Long edgeID : edges.keySet()) {
-            Edge edge = edges.get(edgeID);
-            if (!nodes.keySet().contains(edge.Node1ID))
-                result = false;
-            if (!nodes.keySet().contains(edge.Node2ID))
-                result = false;
-        }
-
-        return result;
-    }
-
-    public static int unitTestSingleComponent(Map<Long, Node> nodes, Map<Long, Edge> edges) {
-        return getComponents(nodes, edges).size();
-    }
-
     /**
      * This function uses the haversine formula to calculate the great circle distance in metres between two nodes.
      *
@@ -264,8 +266,7 @@ public class Main {
      * This function will load the set of points from the database
      * @param points the list of points to be parsed into
      */
-    static void loadPointsFromDatabase(List<Point> points) {
-        try {
+    static void loadPointsFromDatabase(List<Point> points) throws IOException, ParseException {
             points.clear();
 
             HttpURLConnection connection = ((HttpURLConnection) new URL("http://localhost:5000/analytics").openConnection());
@@ -293,12 +294,6 @@ public class Main {
             }
         }
 
-        catch(IOException | ParseException e) {
-            System.out.println("There was a problem getting point data from the database:");
-            e.printStackTrace();
-        }
-    }
-
     static class SizeComparator implements Comparator<Set<?>> {
 
         @Override
@@ -316,9 +311,16 @@ public class Main {
      *
      * @param args the command line arguments of the program.
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
 
-        loadPointsFromDatabase(points);
+        try {
+            loadPointsFromDatabase(points);
+        }
+        catch(IOException | ParseException e) {
+            System.out.println("There was an error in the initial database pull.");
+            e.printStackTrace();
+            System.exit(1);
+        }
 
         /* getPointsFromBigCSV("data.csv", points); */
 
@@ -450,7 +452,13 @@ public class Main {
             Map<Long, Edge> newEdges = new HashMap<>(edges);
 
             synchronized (points) {
-                loadPointsFromDatabase(points);
+                try {
+                    loadPointsFromDatabase(points);
+                }
+                catch (IOException | ParseException e) {
+                    System.out.println("There was an error getting points from the database.");
+                    e.printStackTrace();
+                }
             }
 
             pointToEdge(points, newEdges, newNodes);

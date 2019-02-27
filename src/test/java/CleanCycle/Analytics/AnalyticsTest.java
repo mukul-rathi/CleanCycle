@@ -1,13 +1,19 @@
 package CleanCycle.Analytics;
 
+import org.json.simple.parser.ParseException;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.Iterator;
+import java.util.Collections;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class AnalyticsTest {
     private void writeJSONMap() {
@@ -88,8 +94,13 @@ public class AnalyticsTest {
 
     @Test public void testDatabaseQuery() {
         final List<Point> points = new ArrayList<>();
-
-        Main.loadPointsFromDatabase(points);
+        try {
+            Main.loadPointsFromDatabase(points);
+        }
+        catch(IOException | ParseException e) {
+            e.printStackTrace();
+            fail();
+        }
 
         assertTrue("Database pull error, found " + points.size() + " points, should have been > 0.", points.size() > 0);
     }
@@ -122,7 +133,13 @@ public class AnalyticsTest {
         final Map<Long, Edge> edges = new HashMap<>();
         final List<Point> points = new ArrayList<>();
 
-        Main.loadPointsFromDatabase(points);
+        try {
+            Main.loadPointsFromDatabase(points);
+        }
+        catch(IOException | ParseException e) {
+            e.printStackTrace();
+            fail();
+        }
 
         writeJSONMap();
         Main.readDataFromJSON("testMap.json", nodes, edges);
@@ -158,7 +175,13 @@ public class AnalyticsTest {
         final Map<Long, Edge> edges = new HashMap<>();
         final List<Point> points = new ArrayList<>();
 
-        Main.loadPointsFromDatabase(points);
+        try {
+            Main.loadPointsFromDatabase(points);
+        }
+        catch(IOException | ParseException e) {
+            e.printStackTrace();
+            fail();
+        }
 
         writeJSONMap();
         Main.readDataFromJSON("testMap.json", nodes, edges);
