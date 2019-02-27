@@ -4,7 +4,12 @@ import org.json.simple.parser.ParseException;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.InetAddress;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -13,7 +18,9 @@ import java.util.Set;
 import java.util.Iterator;
 import java.util.Collections;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class AnalyticsTest {
     private void writeJSONMap() {
@@ -223,5 +230,166 @@ public class AnalyticsTest {
         }
 
         assertTrue("Invalid edges exist", testResult);
+    }
+
+    @Test public void testEdgeSocketTransmission() {
+        final Map<Long, Node> nodes = new HashMap<>();
+        final Map<Long, Edge> edges = new HashMap<>();
+        final List<Point> points = new ArrayList<>();
+
+        try {
+            Main.loadPointsFromDatabase(points);
+        }
+        catch(IOException | ParseException e) {
+            e.printStackTrace();
+            fail();
+        }
+
+        writeJSONMap();
+        Main.readDataFromJSON("testMap.json", nodes, edges);
+
+        List<Set<Long>> components = Main.getComponents(nodes, edges);
+        Collections.sort(components, new Main.SizeComparator());
+        Collections.reverse(components);
+        Set<Long> IDsOfMainComponent = components.get(0);
+
+        /* Now we remove all nodes and edges that reference non-main components */
+
+        Iterator nodeIt = nodes.keySet().iterator();
+        while (nodeIt.hasNext()) {
+            Long nodeID = (Long)nodeIt.next();
+            if (!IDsOfMainComponent.contains(nodeID)) {
+                nodeIt.remove();
+            }
+        }
+
+        Iterator edgeIt = edges.keySet().iterator();
+        while (edgeIt.hasNext()) {
+            Long edgeID = (Long)edgeIt.next();
+            Edge edge = edges.get(edgeID);
+            if (!IDsOfMainComponent.contains(edge.Node1ID) || !IDsOfMainComponent.contains(edge.Node2ID)) {
+                edgeIt.remove();
+            }
+        }
+
+        Main.pointToEdge(points, edges, nodes);
+
+        Thread sendEdgesThread = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    ServerSocket serverSocket = new ServerSocket(54333);
+                    while (true) {
+                        Socket outputSocket = serverSocket.accept();
+                        ObjectOutputStream out = new ObjectOutputStream(outputSocket.getOutputStream());
+
+                        synchronized (nodes) {
+                            synchronized (edges) {
+                                out.writeObject(nodes);
+                                out.writeObject(edges);
+                            }
+                        }
+                    }
+                } catch (IOException e) {
+                    System.out.println("There was an error transmitting analytics data.");
+                    e.printStackTrace();
+                }
+            }
+        };
+        sendEdgesThread.setDaemon(true);
+        sendEdgesThread.start();
+
+        try {
+            Socket s = new Socket(InetAddress.getLocalHost(), 54333);
+            ObjectInputStream in = new ObjectInputStream(s.getInputStream());
+
+            Map<Long, Node> newNodes = (Map<Long, Node>) in.readObject();
+            Map<Long, Edge> newEdges = (Map<Long, Edge>) in.readObject();
+
+            assertTrue("Node map size was not > 0.", newNodes.size() > 0);
+            assertTrue("Edge map size was not > 0.", newEdges.size() > 0);
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("There was an error receiving analytics data.");
+            e.printStackTrace();
+            fail();
+        }
+    }
+
+    @Test public void testPointSocketTransmission() {
+        final Map<Long, Node> nodes = new HashMap<>();
+        final Map<Long, Edge> edges = new HashMap<>();
+        final List<Point> points = new ArrayList<>();
+
+        try {
+            Main.loadPointsFromDatabase(points);
+        }
+        catch(IOException | ParseException e) {
+            e.printStackTrace();
+            fail();
+        }
+
+        writeJSONMap();
+        Main.readDataFromJSON("testMap.json", nodes, edges);
+
+        List<Set<Long>> components = Main.getComponents(nodes, edges);
+        Collections.sort(components, new Main.SizeComparator());
+        Collections.reverse(components);
+        Set<Long> IDsOfMainComponent = components.get(0);
+
+        /* Now we remove all nodes and edges that reference non-main components */
+
+        Iterator nodeIt = nodes.keySet().iterator();
+        while (nodeIt.hasNext()) {
+            Long nodeID = (Long)nodeIt.next();
+            if (!IDsOfMainComponent.contains(nodeID)) {
+                nodeIt.remove();
+            }
+        }
+
+        Iterator edgeIt = edges.keySet().iterator();
+        while (edgeIt.hasNext()) {
+            Long edgeID = (Long)edgeIt.next();
+            Edge edge = edges.get(edgeID);
+            if (!IDsOfMainComponent.contains(edge.Node1ID) || !IDsOfMainComponent.contains(edge.Node2ID)) {
+                edgeIt.remove();
+            }
+        }
+
+        Main.pointToEdge(points, edges, nodes);
+
+        Thread sendPointsThread = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    ServerSocket serverSocket = new ServerSocket(54334);
+                    while (true) {
+                        Socket outputSocket = serverSocket.accept();
+                        ObjectOutputStream out = new ObjectOutputStream(outputSocket.getOutputStream());
+
+                        synchronized (points) {
+                            out.writeObject(points);
+                        }
+                    }
+                } catch (IOException e) {
+                    System.out.println("There was an error transmitting heatmap data.");
+                    e.printStackTrace();
+                }
+            }
+        };
+        sendPointsThread.setDaemon(true);
+        sendPointsThread.start();
+
+        try {
+            Socket s = new Socket(InetAddress.getLocalHost(), 54334);
+            ObjectInputStream in = new ObjectInputStream(s.getInputStream());
+
+            List<Point> newPoints = (List<Point>)in.readObject();
+
+            assertTrue("Point list size was not > 0.", newPoints.size() > 0);
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("There was an error receiving heatmap data.");
+            e.printStackTrace();
+            fail();
+        }
     }
 }
