@@ -1,0 +1,26 @@
+version: '3'
+
+services: 
+  endpoint:
+    build: ./database-server/src
+    env_file: ./database-server/database.env
+    volumes:
+      - ./database-server/src:/usr/src/app
+    ports:
+        - 5000:80
+    depends_on:
+       -  database
+  database:
+    image: postgres
+    restart: always
+    env_file: ./database-server/database.env
+    volumes:
+      - ./database-server/data:/var/lib/postgresql/data
+  analytics:
+    build: ./
+    depends_on:
+      - database
+      - endpoint
+    volumes:
+      - ./src/main/java/CleanCycle/Analytics:/home/gradle/project/src/main/java/CleanCycle/Analytics
+      - ./src/test/java/CleanCycle/Analytics:/home/gradle/project/src/test/java/CleanCycle/Analytics

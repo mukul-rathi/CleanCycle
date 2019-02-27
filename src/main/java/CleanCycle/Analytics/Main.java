@@ -269,7 +269,7 @@ public class Main {
     static void loadPointsFromDatabase(List<Point> points) throws IOException, ParseException {
             points.clear();
 
-            HttpURLConnection connection = ((HttpURLConnection) new URL("http://localhost:5000/analytics").openConnection());
+            HttpURLConnection connection = ((HttpURLConnection) new URL("http://endpoint/analytics").openConnection());
             connection.setRequestMethod("GET");
             int responseCode = connection.getResponseCode();
             if (responseCode == HttpURLConnection.HTTP_OK) {

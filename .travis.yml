@@ -6,9 +6,7 @@ services:
 - docker
 script:
 - cp database-server/tests/test.csv database-server/src/backups
-- docker-compose -f database-server/docker-tests.yml build && docker-compose -f database-server/docker-tests.yml
-  up -d
-- database-server/tests/wait-for-it.sh "localhost:5000" --timeout=120 -- gradle build
+- docker-compose -f database-server/docker-tests.yml build && docker-compose -f database-server/docker-tests.yml run analytics
 - docker-compose -f database-server/docker-tests.yml down -v
 - docker-compose -f database-server/docker-tests.yml run test
 notifications:
