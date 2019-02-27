@@ -31,3 +31,5 @@ services:
     volumes:
       - ./src/main/java/CleanCycle/Analytics:/home/gradle/project/src/main/java/CleanCycle/Analytics
       - ./src/test/java/CleanCycle/Analytics:/home/gradle/project/src/test/java/CleanCycle/Analytics
+    environment:
+      - TEST_ENV=True #so will run tests

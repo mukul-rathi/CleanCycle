@@ -24,3 +24,5 @@ services:
     volumes:
       - ./src/main/java/CleanCycle/Analytics:/home/gradle/project/src/main/java/CleanCycle/Analytics
       - ./src/test/java/CleanCycle/Analytics:/home/gradle/project/src/test/java/CleanCycle/Analytics
+    ports:
+      - 54334:54334
