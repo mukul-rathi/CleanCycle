@@ -322,7 +322,7 @@ public class Main {
             System.exit(1);
         }
 
-        /* getPointsFromBigCSV("data.csv", points); */
+        /*getPointsFromBigCSV("data.csv", points);*/
 
         readDataFromJSON("map.json", nodes, edges);
 
