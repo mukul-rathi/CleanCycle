@@ -403,30 +403,6 @@ public class Main {
         sendPointsThread.setDaemon(true);
         sendPointsThread.start();
 
-        /* This thread is a test to check whether the edges and nodes are being served correctly. */
-        /*
-        Thread receiveThread = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    Socket s = new Socket(InetAddress.getLocalHost(), 54333);
-                    ObjectInputStream in = new ObjectInputStream(s.getInputStream());
-
-                    Map<Long, Node> nodes = (Map<Long, Node>) in.readObject();
-                    Map<Long, Edge> edges = (Map<Long, Edge>) in.readObject();
-
-                    System.out.println("Number of nodes read in: " + nodes.size());
-                    System.out.println("Number of edges read in: " + edges.size());
-                } catch (IOException | ClassNotFoundException e) {
-                    System.out.println("There was an error receiving analytics data.");
-                    e.printStackTrace();
-                }
-            }
-        };
-        receiveThread.setDaemon(true);
-        receiveThread.start();
-        */
-
         /* This part writes the edges and notes to an output file, from before sockets were set up */
         /*
         ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("nodes.obj"));

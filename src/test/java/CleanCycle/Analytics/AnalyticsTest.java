@@ -300,6 +300,7 @@ public class AnalyticsTest {
         sendEdgesThread.start();
 
         try {
+            Thread.sleep(1000);
             Socket s = new Socket(InetAddress.getLocalHost(), 54333);
             ObjectInputStream in = new ObjectInputStream(s.getInputStream());
 
@@ -308,7 +309,7 @@ public class AnalyticsTest {
 
             assertTrue("Node map size was not > 0.", newNodes.size() > 0);
             assertTrue("Edge map size was not > 0.", newEdges.size() > 0);
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException | InterruptedException e) {
             System.out.println("There was an error receiving analytics data.");
             e.printStackTrace();
             fail();
@@ -380,13 +381,14 @@ public class AnalyticsTest {
         sendPointsThread.start();
 
         try {
+            Thread.sleep(1000);
             Socket s = new Socket(InetAddress.getLocalHost(), 54334);
             ObjectInputStream in = new ObjectInputStream(s.getInputStream());
 
             List<Point> newPoints = (List<Point>)in.readObject();
 
             assertTrue("Point list size was not > 0.", newPoints.size() > 0);
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException | InterruptedException e) {
             System.out.println("There was an error receiving heatmap data.");
             e.printStackTrace();
             fail();
