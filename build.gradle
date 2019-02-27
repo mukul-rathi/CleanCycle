@@ -20,6 +20,10 @@ repositories {
     jcenter()
 }
 
+tasks.withType(JavaExec) {
+    jvmArgs = ['-Xss1000m']
+}
+
 dependencies {
     // This dependency is found on compile classpath of this component and consumers.
     implementation 'com.google.guava:guava:27.0.1-jre'

@@ -296,8 +296,6 @@ public class Main {
      * @param points the list of points to be parsed into
      */
     static void loadPointsFromDatabase(List<Point> points) throws IOException, ParseException {
-        points.clear();
-
         HttpURLConnection connection = ((HttpURLConnection) new URL("http://endpoint/analytics").openConnection());
         connection.setRequestMethod("GET");
         int responseCode = connection.getResponseCode();
@@ -315,6 +313,8 @@ public class Main {
 
             JSONArray bigArray = (JSONArray) parser.parse(jsonString); // "new FileReader(filename)" for file,
                                                                        // jsonString for string
+
+            points.clear();
 
             for (Object obj : bigArray) {
                 JSONArray littleArray = (JSONArray) obj;
@@ -343,7 +343,7 @@ public class Main {
      * @param args the command line arguments of the program.
      */
     public static void main(String[] args) {
-        int exponentialBackoff = 1; //wait longer durations of time every time unsuccessful.
+        int exponentialBackoff = 1; // wait longer durations of time every time unsuccessful.
         Random r = new Random();
         boolean successfulConnection = false;
         while (!successfulConnection) {
@@ -363,7 +363,7 @@ public class Main {
             }
         }
 
-        /*getPointsFromBigCSV("data.csv", points);*/
+        /* getPointsFromBigCSV("data.csv", points); */
 
         readDataFromJSON("map.json", nodes, edges);
 
@@ -465,9 +465,6 @@ public class Main {
                 e.printStackTrace();
             }
 
-            Map<Long, Node> newNodes = new HashMap<>(nodes);
-            Map<Long, Edge> newEdges = new HashMap<>(edges);
-
             synchronized (points) {
                 try {
                     loadPointsFromDatabase(points);
@@ -477,6 +474,9 @@ public class Main {
                     e.printStackTrace();
                 }
             }
+
+            Map<Long, Node> newNodes = new HashMap<>(nodes);
+            Map<Long, Edge> newEdges = new HashMap<>(edges);
 
             pointToEdge(points, newEdges, newNodes);
 
