@@ -18,6 +18,7 @@ services:
       - ./database-server/data:/var/lib/postgresql/data
   analytics:
     build: ./
+    restart: always
     depends_on:
       - database
       - endpoint
