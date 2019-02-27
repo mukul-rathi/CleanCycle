@@ -1,0 +1,2 @@
+./gradlew assemble
+./gradlew run
