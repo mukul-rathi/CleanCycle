@@ -5,11 +5,9 @@ jdk: oraclejdk8
 services:
 - docker
 script:
-
-  - gradle build 
-  - docker-compose -f database-server/docker-tests.yml build
-  - docker-compose -f database-server/docker-tests.yml run test
-
+- gradle build
+- docker-compose -f database-server/docker-tests.yml build
+- docker-compose -f database-server/docker-tests.yml run test
 notifications:
   slack: cleancycle:5lF8hEqYZvrw9XflPC3eG2GD
 before_install:
