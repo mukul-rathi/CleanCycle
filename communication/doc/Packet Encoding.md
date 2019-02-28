@@ -4,11 +4,11 @@ We can send 51 bytes (408 bits) with each payload.
 We want to send as much necessary data per packet as possible. In order to do this we need to prioritise which data we send and find a space-efficient way of sending it.  
 Since the scope of our project encompasses only the pollution aspect of the data, we can limit the data we send over LoRaWAN to only latitude, longitude, PM10 and PM2.5 values.
 
-From the documentation of the SDS011<sup>[1]</sup>, we know that the PM10 and PM2.5 values will be in the range 0-1000. If we truncate the values and remove the decimal point, we can represent this using only 10 bits (2<sup>10</sup> = 1024). This is a reasonable truncation since there is some error in the air quality sensor measurement, and we also don't need overly precise measurements for our end goal.
+From the documentation of the SDS011<sup>[\[1\]]</sup>, we know that the PM10 and PM2.5 values will be in the range 0-1000. If we truncate the values and remove the decimal point, we can represent this using only 10 bits (2<sup>10</sup> = 1024). This is a reasonable truncation since there is some error in the air quality sensor measurement, and we also don't need overly precise measurements for our end goal.
 
 The next thing we need to find out is how the number of decimal places in the latitude and longitude relates to the precision of our measurement. The following tables show this relation both in decimal and in binary. In our case the binary table is more informative.
 
-### In Decimal<sup>[2]</sup>
+### In Decimal<sup>[\[2\]]</sup>
 
 
 | Number of decimals | Precision |
@@ -77,9 +77,12 @@ This would take us from needing 10 bits to needing 4 bits. This is a fairly good
 We end up with a header containing 34 bits, and each subsequent datapoint will need 42 bits of data. This allows us to fit 8 datapoints per packet and leaving 34 bits free at the end for potentially doing some sort of checksum or adding other miscellaneous packet data. 
 This covers at most 24 seconds of movement, in which a cyclist travelling at 15m/s (54km/h) would travel 360m, which is less than the precision where we are splitting the data, so this does not cause issues.
 
+<br>
+<br>
+<br>
 
+[\[1\]]: https://nettigo.pl/attachments/398
+\[1\] <https://nettigo.pl/attachments/398>
 
-[[1]: https://nettigo.pl/attachments/398
-[1] <https://nettigo.pl/attachments/398>  
-[[2]: https://en.wikipedia.org/wiki/Decimal_degrees
-[2] <https://en.wikipedia.org/wiki/Decimal_degrees>
+[\[2\]]: https://en.wikipedia.org/wiki/Decimal_degrees
+\[2\] <https://en.wikipedia.org/wiki/Decimal_degrees>
