@@ -466,12 +466,23 @@ public class Main {
             }
 
             synchronized (points) {
-                try {
-                    loadPointsFromDatabase(points);
-                }
-                catch (IOException | ParseException e) {
-                    System.out.println("There was an error getting points from the database.");
-                    e.printStackTrace();
+                 exponentialBackoff = 1; // wait longer durations of time every time unsuccessful.
+                 successfulConnection = false;
+                while (!successfulConnection) {
+                    try {
+                        loadPointsFromDatabase(points);
+                        successfulConnection = true;
+                        exponentialBackoff = 1;
+                    } catch (IOException | ParseException e) {
+                        System.err.println("There was an error getting points from the database.");
+                        int wait = r.nextInt(exponentialBackoff); //sleep before trying again
+                        try {
+                            Thread.sleep(wait*100); //wait * 100 ms
+                        } catch (InterruptedException e1) {
+                            e1.printStackTrace();
+                        }
+                        exponentialBackoff*=2;
+                    }
                 }
             }
 
