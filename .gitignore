@@ -3,6 +3,12 @@ __pycache__/
 database-server/data/
 .DS_Store
 *.csv
+*.csv
+*.json
+.idea/
+*.iml
+out/
+*.obj
 # Ignore Gradle project-specific cache directory
 .gradle
 
@@ -27,5 +33,20 @@ gradle-app.setting
 #Ignore pytest output
 .pytest_cache/
 
-#Allow test csv file to be used for testing
+#Allow test csv and json files to be used for testing
 !database-server/tests/test.csv
+!test-map.json
+
+#Ignore VS Code config
+.classpath
+.project
+.settings/
+bin/#Ignore VS Code config
+.classpath
+.project
+.settings/
+bin/#Ignore VS Code config
+.classpath
+.project
+.settings/
+bin/

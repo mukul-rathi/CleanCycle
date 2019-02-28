@@ -20,13 +20,19 @@ repositories {
     jcenter()
 }
 
+tasks.withType(JavaExec) {
+    jvmArgs = ['-Xss1000m']
+}
+
 dependencies {
     // This dependency is found on compile classpath of this component and consumers.
     implementation 'com.google.guava:guava:27.0.1-jre'
+
+    implementation 'com.googlecode.json-simple:json-simple:1.1'
 
     // Use JUnit test framework
     testImplementation 'junit:junit:4.12'
 }
 
 // Define the main class for the application
-mainClassName = 'CleanCycle.App'
+mainClassName = 'CleanCycle.Analytics.Main'
