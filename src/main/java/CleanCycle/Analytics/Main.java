@@ -162,8 +162,11 @@ public class Main {
                             synchronized (edges) {
                                 out.writeObject(nodes);
                                 out.writeObject(edges);
+
                             }
                         }
+
+                        out.flush();
                     }
                 } catch (IOException e) {
                     System.out.println("There was an error transmitting analytics data.");
@@ -187,6 +190,8 @@ public class Main {
                         synchronized (points) {
                             out.writeObject(points);
                         }
+
+                        out.flush();
                     }
                 } catch (IOException e) {
                     System.out.println("There was an error transmitting heatmap data.");
