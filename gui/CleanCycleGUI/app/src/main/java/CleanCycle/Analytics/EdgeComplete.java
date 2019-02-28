@@ -1,7 +1,6 @@
-package uk.ac.cam.cl.cleancyclegraph;
+package CleanCycle.Analytics;
 
 import java.io.Serializable;
-import java.util.Locale;
 
 public class EdgeComplete implements Serializable {
     public final long ID;

@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import uk.ac.cam.cl.cleancyclegraph.EdgeComplete;
+import CleanCycle.Analytics.EdgeComplete;
 
 public class SavedRoutes implements Serializable {
     private Map<String,List<EdgeComplete>> routes;

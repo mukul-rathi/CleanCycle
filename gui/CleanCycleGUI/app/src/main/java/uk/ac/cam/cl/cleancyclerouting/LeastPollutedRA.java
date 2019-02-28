@@ -2,11 +2,8 @@ package uk.ac.cam.cl.cleancyclerouting;
 
 import java.util.*;
 
-import uk.ac.cam.cl.cleancyclegraph.Edge;
-import uk.ac.cam.cl.cleancyclegraph.Node;
-import uk.ac.cam.cl.cleancyclerouting.Algorithm;
-import uk.ac.cam.cl.cleancyclerouting.GraphNotConnectedException;
-import uk.ac.cam.cl.cleancyclerouting.RouteAlgorithm;
+import CleanCycle.Analytics.Edge;
+import CleanCycle.Analytics.Node;
 
 public class LeastPollutedRA implements RouteAlgorithm {
     Map<Long, Double> value;

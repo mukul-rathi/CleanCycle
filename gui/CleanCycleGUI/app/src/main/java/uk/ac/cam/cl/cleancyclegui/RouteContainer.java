@@ -2,7 +2,7 @@ package uk.ac.cam.cl.cleancyclegui;
 
 import java.util.List;
 
-import uk.ac.cam.cl.cleancyclegraph.EdgeComplete;
+import CleanCycle.Analytics.EdgeComplete;
 
 class RouteContainer {
     private List<EdgeComplete> route;

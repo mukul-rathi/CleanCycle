@@ -7,10 +7,10 @@ import java.lang.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import uk.ac.cam.cl.cleancyclegraph.Edge;
-import uk.ac.cam.cl.cleancyclegraph.EdgeComplete;
-import uk.ac.cam.cl.cleancyclegraph.MapInfoContainer;
-import uk.ac.cam.cl.cleancyclegraph.Node;
+import CleanCycle.Analytics.Edge;
+import CleanCycle.Analytics.EdgeComplete;
+import CleanCycle.Analytics.MapInfoContainer;
+import CleanCycle.Analytics.Node;
 
 public class RouteFinder{
     private Map<Long, Node> nodes = null;

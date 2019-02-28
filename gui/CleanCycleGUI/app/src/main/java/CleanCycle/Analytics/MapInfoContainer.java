@@ -1,4 +1,4 @@
-package uk.ac.cam.cl.cleancyclegraph;
+package CleanCycle.Analytics;
 
 public class MapInfoContainer {
     private double pollutionPercentile5;

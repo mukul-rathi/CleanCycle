@@ -55,18 +55,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import uk.ac.cam.cl.cleancyclegraph.EdgeComplete;
-import uk.ac.cam.cl.cleancyclegraph.MapInfoContainer;
-import uk.ac.cam.cl.cleancyclegraph.Node;
-import uk.ac.cam.cl.cleancyclegraph.Point;
+
+import CleanCycle.Analytics.EdgeComplete;
+import CleanCycle.Analytics.MapInfoContainer;
+import CleanCycle.Analytics.Node;
+import CleanCycle.Analytics.Point;
 import uk.ac.cam.cl.cleancyclerouting.Algorithm;
 import uk.ac.cam.cl.cleancyclerouting.GraphNotConnectedException;
 import uk.ac.cam.cl.cleancyclerouting.NotSetUpException;
@@ -122,6 +123,23 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             updateDistanceLabel("I: plotting route");
             plotRoute(map, route);
             updateDistanceLabel("I: route plotted");
+        }
+    };
+
+    private FetchGraphUtil defaultFetchGraphUtil = new FetchGraphUtil() {
+        @Override
+        public void updateLabel(String msg) {
+            updateDistanceLabel(msg);
+        }
+
+        @Override
+        public InputStream getEdgesStream() {
+            return getResources().openRawResource(R.raw.edges_new);
+        }
+
+        @Override
+        public InputStream getNodesStream() {
+            return getResources().openRawResource(R.raw.nodes_new);
         }
     };
 
@@ -193,8 +211,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     /**
      * An asynchronous task used to draw a heat map visualising the pollution data
      */
-    class DrawHeatMapAsync extends AsyncTask<Set<Point>,Void,Void> {
-        private void drawHeatMap(Set<Point> points) {
+    class DrawHeatMapAsync extends AsyncTask<Void,Void,Void> {
+        private void drawHeatMap(List<Point> points) {
             //TileOverlay tileOverlay = gMap.addTileOverlay();
             Projection projection = map.getProjection();
             VisibleRegion visibleRegion = projection.getVisibleRegion();
@@ -236,21 +254,48 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             }
         }
 
+        private List<Point> fetchPoints() {
+            try {
+                Socket socket = new Socket("b96d3eac.ngrok.io", 54334);
+                ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+                List<Point> points = (List<Point>) ois.readObject();
+                ois.close();
+                socket.close();
+                return points;
+            } catch (UnknownHostException e) {
+                // should never happen
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassCastException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+
         @Override
-        protected Void doInBackground(Set<Point>... sets) {
-            Set<Point> S = new HashSet<>();
-            for (Set<Point> s : sets) S.addAll(s);
-            drawHeatMap(S);
+        protected Void doInBackground(Void... v) {
+            updateDistanceLabel("I: fetching points");
+            List<Point> points = fetchPoints();
+            if (points == null) {
+                updateDistanceLabel("E: failed to fetch points");
+                return null;
+            }
+            updateDistanceLabel("I: drawing heat map");
+            drawHeatMap(points);
+            updateDistanceLabel("I: heatmap done");
             return null;
         }
     }
 
 
-
     class SavedRouteItemClickListener implements OnItemClickListener {
         private SavedRoutes savedRoutes;
 
-        public SavedRouteItemClickListener(GoogleMap map, SavedRoutes savedRoutes) {
+        public SavedRouteItemClickListener(SavedRoutes savedRoutes) {
             this.savedRoutes = savedRoutes;
         }
 
@@ -431,7 +476,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                     panToLocation(map, defaultLocation);
                 }
                 // context, route container, route finder container, map info container, algorithm container
-                new FetchGraphAsync(this, currentRoute, routeFinderContainer, mapInfoContainer, algorithmContainer, distanceLabel, defaultRouteHandler).execute(defaultLocation, goal);
+                new FetchGraphAsync(this, currentRoute, routeFinderContainer, mapInfoContainer, algorithmContainer, defaultRouteHandler, defaultFetchGraphUtil).execute(defaultLocation, goal);
             });
         } else {
             plotRoute(defaultLocation, goal);
@@ -501,6 +546,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
         // load any saved routes
         new LoadSavedRoutesAsync().execute();
+        //new DrawHeatMapAsync().execute();
 
         // the route finder will be used to get a List<Node> representing the route between the
         // current location and the destination
@@ -580,7 +626,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
         savedRoutesLayoutManager = new LinearLayoutManager(this);
         savedRoutesListView.setLayoutManager(savedRoutesLayoutManager);
-        savedRoutesAdapter = new SavedRoutesAdapter(savedRoutes, new SavedRouteItemClickListener(map, savedRoutes));
+        savedRoutesAdapter = new SavedRoutesAdapter(savedRoutes, new SavedRouteItemClickListener(savedRoutes));
         savedRoutesListView.setAdapter(savedRoutesAdapter);
 
 
@@ -611,12 +657,15 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         clearMap();
 
         for (EdgeComplete edge : edges) {
-            Polyline line = map.addPolyline(new PolylineOptions().add(
-                    new LatLng(edge.node1.Latitude, edge.node1.Longitude), new LatLng(edge.node2.Latitude, edge.node2.Longitude)
-            ).width(7).color(
-                    getPollutionColour(edge.Pollution, mapInfoContainer, 1f)
-                    //Color.BLUE
-            ).endCap(new RoundCap()).startCap(new RoundCap()));
+            Polyline line = map.addPolyline(new PolylineOptions()
+                    .add(
+                            new LatLng(edge.node1.Latitude, edge.node1.Longitude),
+                            new LatLng(edge.node2.Latitude, edge.node2.Longitude)
+                    )
+                    .width(7).color(getPollutionColour(edge.Pollution, mapInfoContainer, 1f))
+                    .startCap(new RoundCap())
+                    .endCap(new RoundCap())
+            );
             polylines.add(line);
         }
 

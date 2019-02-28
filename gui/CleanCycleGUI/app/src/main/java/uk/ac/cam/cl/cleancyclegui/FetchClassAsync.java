@@ -3,7 +3,6 @@ package uk.ac.cam.cl.cleancyclegui;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.widget.TextView;
 
 import com.google.android.gms.maps.model.LatLng;
 
@@ -12,9 +11,9 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import uk.ac.cam.cl.cleancyclegraph.EdgeComplete;
-import uk.ac.cam.cl.cleancyclegraph.MapInfoContainer;
-import uk.ac.cam.cl.cleancyclegraph.Node;
+import CleanCycle.Analytics.EdgeComplete;
+import CleanCycle.Analytics.MapInfoContainer;
+import CleanCycle.Analytics.Node;
 import uk.ac.cam.cl.cleancyclerouting.GraphNotConnectedException;
 import uk.ac.cam.cl.cleancyclerouting.NotSetUpException;
 import uk.ac.cam.cl.cleancyclerouting.RouteFinder;
@@ -26,34 +25,33 @@ class FetchGraphAsync extends AsyncTask<LatLng, Void, List<EdgeComplete>> {
     private RouteFinderContainer routeFinderContainer;
     private MapInfoContainer mapInfoContainer;
     private AlgorithmContainer algorithmContainer;
-    private Context context;
     private RouteContainer routeContainer;
-    private TextView statusLabel;
     private RouteHandler routeHandler;
+    private FetchGraphUtil util;
 
     public FetchGraphAsync(Context context, RouteContainer routeContainer,
                            RouteFinderContainer routeFinderContainer,
                            MapInfoContainer mapInfoContainer,
                            AlgorithmContainer algorithmContainer,
-                           TextView statusLabel,
-                           RouteHandler routeHandler) {
-        this.context = context;
+                           RouteHandler routeHandler,
+                           FetchGraphUtil util
+    ) {
         this.routeFinderContainer = routeFinderContainer;
         this.mapInfoContainer = mapInfoContainer;
         this.routeContainer = routeContainer;
         this.algorithmContainer = algorithmContainer;
-        this.statusLabel = statusLabel;
         this.routeHandler = routeHandler;
+        this.util = util;
     }
 
     @Override
     protected List<EdgeComplete> doInBackground(LatLng... points) {
         if (points.length != 2) return null;
         try {
-            updateLabel(statusLabel,"I: finding route");
+            util.updateLabel("I: finding route");
             if (routeFinderContainer.getRouteFinder() == null) {
-                InputStream nodes = context.getResources().openRawResource(R.raw.nodes_updated);
-                InputStream edges = context.getResources().openRawResource(R.raw.edges_updated);
+                InputStream nodes = util.getNodesStream();
+                InputStream edges = util.getEdgesStream();
                 routeFinderContainer.setRouteFinder(new RouteFinder(nodes, edges, mapInfoContainer));
             }
 
@@ -73,18 +71,12 @@ class FetchGraphAsync extends AsyncTask<LatLng, Void, List<EdgeComplete>> {
 
         } catch (NotSetUpException e) {
             e.printStackTrace();
-            updateLabel(statusLabel, "E: Graph not set up.");
+            util.updateLabel( "E: Graph not set up.");
         } catch (GraphNotConnectedException e) {
             e.printStackTrace();
-            updateLabel(statusLabel, "E: Graph not connected.");
+            util.updateLabel("E: Graph not connected.");
         }
         return null;
-    }
-
-    private void updateLabel(TextView label, String text) {
-        if (label != null) {
-            label.setText(text);
-        }
     }
 
     @Override
