@@ -96,11 +96,23 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     // the bottom navigation bar
     private BottomNavigationView navigationView;
 
+    // a label to be displayed at the bottom of the map
     private TextView distanceLabel;
+
+    // a location provider
     private FusedLocationProviderClient fusedLocationProviderClient;
+
+    // places search autocomplete field
     private AutocompleteSupportFragment searchAutoComplete;
+
+    // route finder container, used to pass the route finder to various external asynchronous tasks
     private final RouteFinderContainer routeFinderContainer = new RouteFinderContainer(null);
+
+    // google places client
     private PlacesClient placesClient;
+
+    // algorithm container, used to allow async tasks to modify the current algorithm and have
+    // effects accessible in other async tasks
     private final AlgorithmContainer algorithmContainer = new AlgorithmContainer(Algorithm.POLLUTION_ONLY);
     private RadioGroup algorithmSelectGroup;
     private final int locationRequestInt = 2;
