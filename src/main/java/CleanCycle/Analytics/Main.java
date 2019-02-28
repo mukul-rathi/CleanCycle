@@ -32,17 +32,6 @@ public class Main {
      * @param points the list of points to be parsed into
      */
     static void loadPointsFromDatabase(List<Point> points) {
-        /* First we set up the HTTP connection and make sure it works fine. */
-        HttpURLConnection connection = null;
-        try {
-            connection = ((HttpURLConnection) new URL("http://endpoint/analytics").openConnection());
-            connection.setRequestMethod("GET");
-        }
-        catch(IOException e) {
-            System.out.println("Malformed URL or Protocol Exception: cannot fetch data.");
-            e.printStackTrace();
-        }
-
         /* We use an exponential back off loop to make multiple attempts to connect to Mukul's endpoint.
            Every time we fail, we double the time waited until we try again. */
         int backOffTime = 1;
@@ -50,6 +39,8 @@ public class Main {
 
         while(!success) {
             try {
+                HttpURLConnection connection = ((HttpURLConnection) new URL("http://endpoint/analytics").openConnection());
+                connection.setRequestMethod("GET");
                 int responseCode = connection.getResponseCode();
                 if (responseCode == HttpURLConnection.HTTP_OK) {
                     BufferedReader inReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
@@ -86,9 +77,10 @@ public class Main {
             /* If we fail to connect during this time, we wait and then increase wait time. */
             catch(IOException | ParseException e) {
                 try {
-                    Thread.sleep(backOffTime * 100);
-                    backOffTime *= 2;
                     System.out.println("Error fetching data, increasing backoff time...");
+                    Thread.sleep(new java.util.Random().nextInt(backOffTime * 100));
+                    backOffTime *= 2;
+
                 }
                 catch(InterruptedException f) {
                     System.out.println("Interrupted while waiting for data.");
