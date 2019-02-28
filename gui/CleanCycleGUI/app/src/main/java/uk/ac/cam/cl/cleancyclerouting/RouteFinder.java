@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import uk.ac.cam.cl.cleancyclegraph.Edge;
 import uk.ac.cam.cl.cleancyclegraph.EdgeComplete;
+import uk.ac.cam.cl.cleancyclegraph.MapInfoContainer;
 import uk.ac.cam.cl.cleancyclegraph.Node;
 
 public class RouteFinder{
@@ -19,23 +20,14 @@ public class RouteFinder{
     private InputStream nodesIs;
     private InputStream edgesIs;
 
-    public RouteFinder(InputStream nodes, InputStream edges){
+    private MapInfoContainer mapInfoContainer;
+
+    public RouteFinder(InputStream nodes, InputStream edges, MapInfoContainer mapInfoContainer){
         nodesIs = nodes;
         edgesIs = edges;
         algorithm = new LeastPollutedRA();
+        this.mapInfoContainer = mapInfoContainer;
     }
-
-    /*private List<Edge> findPath(Long startNode, Long endNode) {
-        List<Edge> ret = new ArrayList<>();
-        Map<Long,Edge> pred = new HashMap<>();
-        Node n = nodes.get(startNode);
-        LinkedList<Node> nodes = new LinkedList<>();
-        nodes.addLast(n);
-        while (!nodes.isEmpty()) {
-            Node node = nodes.pollFirst();
-            // TODO: finish depth first search to find path between nodes
-        }
-    }*/
 
     @SuppressLint("NewApi")
     public List<EdgeComplete> findRouteEdges(Algorithm algo, Double lat1, Double lon1, Double lat2, Double lon2) throws NotSetUpException, GraphNotConnectedException {
@@ -51,13 +43,18 @@ public class RouteFinder{
                     edgs.add(edge);
                     done = true;
                     break;
+                } else if (first.ID == edge.Node2ID && second.ID == edge.Node1ID) {
+                    Edge e = new Edge(edge.ID, edge.WayID, edge.Node2ID, edge.Node1ID, edge.Distance);
+                    e.Pollution = edge.Pollution;
+                    edgs.add(e);
+                    done = true;
+                    break;
                 }
             }
             if (!done) System.err.println(String.format(Locale.ENGLISH, "Failed to find edge containing nodes: %d and %d", first.ID, second.ID));
         }
         return edgs.stream().map(x -> {
-            EdgeComplete ec = new EdgeComplete(x.ID, x.WayID, nodes.get(x.Node1ID), nodes.get(x.Node2ID), x.Distance);
-            ec.Pollution = x.Pollution;
+            EdgeComplete ec = new EdgeComplete(x.ID, x.WayID, nodes.get(x.Node1ID), nodes.get(x.Node2ID), x.Distance, x.Pollution);
             return ec;
         }).collect(Collectors.toList());
     }
@@ -77,6 +74,28 @@ public class RouteFinder{
         }
         if(edges == null){
             if(!fetchEdges()) throw new NotSetUpException(2);
+
+            List<Double> pollution = new ArrayList<>();
+            for (Edge edge : edges.values()) {
+                pollution.add(edge.Pollution);
+            }
+            Collections.sort(pollution);
+
+            int percentile5  =      pollution.size() / 20;
+            int percentile10 =      pollution.size() / 10;
+            int percentile90 =  9 * pollution.size() / 10;
+            int percentile95 = 19 * pollution.size() / 20;
+
+            mapInfoContainer.setPollutionPercentile5(pollution.get(percentile5));
+            mapInfoContainer.setPollutionPercentile10(pollution.get(percentile10));
+            mapInfoContainer.setPollutionPercentile90(pollution.get(percentile90));
+            mapInfoContainer.setPollutionPercentile95(pollution.get(percentile95));
+
+            /*for (Edge edge : edges.values()) {
+                if (edge.Pollution > 1000f) continue;
+                if (mapInfoContainer.getMaxPollution() < edge.Pollution) mapInfoContainer.setMaxPollution(edge.Pollution);
+                if (mapInfoContainer.getMinPollution() > edge.Pollution) mapInfoContainer.setMinPollution(edge.Pollution);
+            }*/
         }
         Long from = findClosestNode(lat1, long1);
         Long to = findClosestNode(lat2, long2);
@@ -100,6 +119,7 @@ public class RouteFinder{
         //this is a placeholder
         try {
             edges = (Map<Long, Edge>)deserialize(edgesIs);
+
             normalize();
             return true;
         } catch(Exception exc){
@@ -127,13 +147,6 @@ public class RouteFinder{
                 * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return c;
-        /*double r = 6371000;
-        double phi1 = Math.toRadians(lat1);
-        double phi2 = Math.toRadians(lat2);
-        double lambda1 = Math.toRadians(lon1);
-        double lambda2 = Math.toRadians(lon2);
-        double deltaSigma = Math.acos(Math.sin(phi1)*Math.sin(phi2) + Math.cos(phi1) * Math.cos(phi2) * Math.cos(lambda1 - lambda2));
-        return r * deltaSigma;*/
     }
     public Long findClosestNode(Double latitude, Double longitude){
         Long best = -1L;

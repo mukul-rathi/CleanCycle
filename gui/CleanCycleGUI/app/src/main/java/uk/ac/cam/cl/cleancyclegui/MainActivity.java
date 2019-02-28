@@ -2,6 +2,9 @@ package uk.ac.cam.cl.cleancyclegui;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.AsyncTask;
@@ -13,8 +16,16 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.text.InputType;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import com.google.android.gms.common.api.Status;
@@ -24,11 +35,17 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Polygon;
+import com.google.android.gms.maps.model.PolygonOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.maps.model.RoundCap;
+import com.google.android.gms.maps.model.TileOverlay;
+import com.google.android.gms.maps.model.VisibleRegion;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.Place;
 import com.google.android.libraries.places.api.model.RectangularBounds;
@@ -36,17 +53,27 @@ import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import uk.ac.cam.cl.cleancyclegraph.Edge;
 import uk.ac.cam.cl.cleancyclegraph.EdgeComplete;
+import uk.ac.cam.cl.cleancyclegraph.MapInfoContainer;
 import uk.ac.cam.cl.cleancyclegraph.Node;
+import uk.ac.cam.cl.cleancyclegraph.Point;
 import uk.ac.cam.cl.cleancyclerouting.Algorithm;
 import uk.ac.cam.cl.cleancyclerouting.GraphNotConnectedException;
 import uk.ac.cam.cl.cleancyclerouting.NotSetUpException;
@@ -55,57 +82,17 @@ import uk.ac.cam.cl.cleancyclerouting.RouteFinder;
 
 public class MainActivity extends FragmentActivity implements OnMapReadyCallback {
 
-    class FetchGraphAsync extends AsyncTask<LatLng, Void, List<Node>> {
-        @Override
-        protected List<Node> doInBackground(LatLng... points) {
-            if (points.length != 2) return null;
-            try {
-                updateDistanceLabel("I: finding route");
-                if (routeFinder == null) {
-                    InputStream nodes = getResources().openRawResource(R.raw.nodes_updated);
-                    InputStream edges = getResources().openRawResource(R.raw.edges_updated);
-                    routeFinder = new RouteFinder(nodes, edges);
-                }
-                //return routeFinder.findRouteEdges(Algorithm.POLLUTION_ONLY, points[0].latitude, points[0].longitude, points[1].latitude, points[1].longitude);
-                return routeFinder.findRoute(Algorithm.POLLUTION_ONLY, points[0].latitude, points[0].longitude, points[1].latitude, points[1].longitude);
-
-            } catch (NotSetUpException e) {
-                e.printStackTrace();
-                updateDistanceLabel("E: Graph not set up.");
-            } catch (GraphNotConnectedException e) {
-                e.printStackTrace();
-                updateDistanceLabel("E: Graph not connected.");
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(List<Node> route) {
-            if (route == null) {
-                return;
-            }
-
-            LatLng[] points = new LatLng[route.size()];
-            for (int i=0; i<points.length; ++i) {
-                Node n = route.get(i);
-                points[i] = new LatLng(n.Latitude, n.Longitude);
-            }
-            updateDistanceLabel("I: plotting route");
-            plotRoute(points);
-            updateDistanceLabel("I: route plotted");
-            System.out.println(route.stream().map(x -> String.format(Locale.ENGLISH, "%f,%f", x.Latitude, x.Longitude)).collect(Collectors.toList()));
-        }
-    }
 
     private List<Polyline> polylines = new ArrayList<>();
+    private List<Polygon> polygons = new ArrayList<>();
 
     private LatLng defaultLocation = new LatLng(52.211105, 0.091527);
 
     // fragment which contains the GoogleMap
     private SupportMapFragment mapFragment;
 
-    // dashboard fragment
-    private Fragment dashboardFragment;
+    // settings fragment
+    private Fragment settingsFragment;
 
     // notification fragment
     private Fragment notificationsFragment;
@@ -117,19 +104,295 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     private BottomNavigationView navigationView;
 
     private TextView distanceLabel;
-
     private FusedLocationProviderClient fusedLocationProviderClient;
-
     private AutocompleteSupportFragment searchAutoComplete;
-
-    private RouteFinder routeFinder = null;
-
+    private final RouteFinderContainer routeFinderContainer = new RouteFinderContainer(null);
     private PlacesClient placesClient;
-
+    private final AlgorithmContainer algorithmContainer = new AlgorithmContainer(Algorithm.POLLUTION_ONLY);
+    private RadioGroup algorithmSelectGroup;
     private final int locationRequestInt = 2;
+    private RecyclerView savedRoutesListView;
+    private MapInfoContainer mapInfoContainer = new MapInfoContainer();
+    private final RouteContainer currentRoute = new RouteContainer(null);
+    private SavedRoutes savedRoutes = new SavedRoutes();
+    private Button saveRouteButton;
+    private RecyclerView.Adapter savedRoutesAdapter;
+    private RecyclerView.LayoutManager savedRoutesLayoutManager;
+
+    private MainActivity main = this;
+
+    private boolean showSaveRouteButton = false;
 
 
-    enum Pages {PAGE_MAP, PAGE_DASHBOARD, PAGE_NOTIFICATIONS};
+    enum Pages {PAGE_MAP, PAGE_SETTINGS, PAGE_NOTIFICATIONS};
+
+    class WriteSavedRoutesAsync extends AsyncTask<Void,Void,Void> {
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            if (!saveRoutes()) updateDistanceLabel("E: failed to save routes");
+            else updateDistanceLabel("I: routes saved");
+            return null;
+        }
+
+        private boolean saveRoutes() {
+            try {
+                FileOutputStream fos = getApplicationContext().openFileOutput("saved_routes.obj", Context.MODE_PRIVATE);
+                ObjectOutputStream oos = new ObjectOutputStream(fos);
+                oos.writeObject(savedRoutes.getRoutes());
+                fos.close();
+                return true;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+
+        @Override
+        public void onPostExecute(Void v) {
+            savedRoutesAdapter.notifyDataSetChanged();
+            System.out.println(savedRoutes.getRoutes());
+        }
+    }
+
+    class LoadSavedRoutesAsync extends AsyncTask<Void,Void,Void> {
+        @Override
+        protected Void doInBackground(Void... voids) {
+            Map<String,List<EdgeComplete>> routes = getSavedRoutes();
+            if (routes != null) {
+                for (Map.Entry<String,List<EdgeComplete>> entry : routes.entrySet()) {
+                    savedRoutes.addRoute(entry.getKey(), entry.getValue());
+                }
+            }
+            return null;
+        }
+
+        private Map<String,List<EdgeComplete>> getSavedRoutes() {
+            try {
+                FileInputStream fis = getApplicationContext().openFileInput("saved_routes.obj");
+                ObjectInputStream objStream = new ObjectInputStream(fis);
+                Object obj = objStream.readObject();
+
+                fis.close();
+
+                return (Map<String,List<EdgeComplete>>) obj;
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } catch (ClassCastException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
+
+    /**
+     * An asynchronous task used to draw a heat map visualising the pollution data
+     */
+    class DrawHeatMapAsync extends AsyncTask<Set<Point>,Void,Void> {
+        private void drawHeatMap(Set<Point> points) {
+            //TileOverlay tileOverlay = gMap.addTileOverlay();
+            Projection projection = map.getProjection();
+            VisibleRegion visibleRegion = projection.getVisibleRegion();
+            LatLng southwest = visibleRegion.latLngBounds.southwest;
+            LatLng northeast = visibleRegion.latLngBounds.northeast;
+
+            double[][] pollution = new double[100][100];
+            int[][] count = new int[100][100];
+            double unitX = (northeast.longitude - southwest.longitude) / 100;
+            double unitY = (northeast.latitude - southwest.latitude) / 100;
+            double yAxis = southwest.longitude;
+            double xAxis = southwest.latitude;
+
+
+            for (Point point : points) {
+                int x = (int) Math.floor(((yAxis - point.Longitude) / unitX) % 100);
+                int y = (int) Math.floor(((xAxis - point.Longitude) / unitY) % 100);
+                pollution[y][x] += point.Pollution10;
+                ++count[y][x];
+            }
+
+            for (int y=0; y<100; ++y) {
+                for (int x=0; x<100; ++x) {
+                    pollution[y][x] /= count[y][x];
+                }
+            }
+
+            for (int y=0; y<100; ++y) {
+                for (int x=0; x<100; ++x) {
+                    if (count[y][x] > 0) {
+                        Polygon p = map.addPolygon(new PolygonOptions().add(
+                                new LatLng(southwest.latitude + y * unitY, southwest.longitude + x * unitX),
+                                new LatLng(southwest.latitude + y * unitY + unitY, southwest.longitude + x * unitX + unitX)
+
+                        ).fillColor(getPollutionColour(pollution[y][x], mapInfoContainer,0.2f)));
+                        polygons.add(p);
+                    }
+                }
+            }
+        }
+
+        @Override
+        protected Void doInBackground(Set<Point>... sets) {
+            Set<Point> S = new HashSet<>();
+            for (Set<Point> s : sets) S.addAll(s);
+            drawHeatMap(S);
+            return null;
+        }
+    }
+
+
+    /**
+     * An asynchronous task to fetch the open street maps graph and plot a route etc
+     */
+    class FetchGraphAsync extends AsyncTask<LatLng, Void, List<EdgeComplete>> {
+        private RouteFinderContainer routeFinderContainer;
+        private MapInfoContainer mapInfoContainer;
+        private AlgorithmContainer algorithmContainer;
+        private Context context;
+        private RouteContainer routeContainer;
+        private TextView statusLabel;
+
+        public FetchGraphAsync(Context context, RouteContainer routeContainer, RouteFinderContainer routeFinderContainer, MapInfoContainer mapInfoContainer, AlgorithmContainer algorithmContainer, TextView statusLabel) {
+            this.context = context;
+            this.routeFinderContainer = routeFinderContainer;
+            this.mapInfoContainer = mapInfoContainer;
+            this.routeContainer = routeContainer;
+            this.algorithmContainer = algorithmContainer;
+            this.statusLabel = statusLabel;
+        }
+
+        @Override
+        protected List<EdgeComplete> doInBackground(LatLng... points) {
+            if (points.length != 2) return null;
+            try {
+                updateLabel(statusLabel,"I: finding route");
+                if (routeFinderContainer.getRouteFinder() == null) {
+                    InputStream nodes = context.getResources().openRawResource(R.raw.nodes_updated);
+                    InputStream edges = context.getResources().openRawResource(R.raw.edges_updated);
+                    routeFinderContainer.setRouteFinder(new RouteFinder(nodes, edges, mapInfoContainer));
+                }
+
+                List<EdgeComplete> cur = routeFinderContainer.getRouteFinder().findRouteEdges(
+                        algorithmContainer.getAlgorithm(),
+                        points[0].latitude, points[0].longitude,
+                        points[1].latitude, points[1].longitude);
+
+
+
+                // perform Chaikin here because this keeps the computation asynchronous and prevents
+                // frames from being missed (the UI is the main thread)
+                for (int i=0; i<3; ++i) cur = chaikin(cur);
+
+                routeContainer.setRoute(cur);
+                return cur;
+
+            } catch (NotSetUpException e) {
+                e.printStackTrace();
+                updateLabel(statusLabel, "E: Graph not set up.");
+            } catch (GraphNotConnectedException e) {
+                e.printStackTrace();
+                updateLabel(statusLabel, "E: Graph not connected.");
+            }
+            return null;
+        }
+
+        private void updateLabel(TextView label, String text) {
+            if (label != null) {
+                label.setText(text);
+            }
+        }
+
+        @Override
+        protected void onPostExecute(List<EdgeComplete> route) {
+            if (route == null) return;
+            updateLabel(statusLabel, "I: plotting route");
+            plotRoute(map, route);
+            updateLabel(statusLabel,"I: route plotted");
+        }
+
+
+        /**
+         * Not particularly difficult (see further graphics).
+         * Just a basic function to smooth out the routes. Makes sharp corners less sharp and fades
+         * splits changes in edge colour across multiple edges.
+         *
+         * @param edgesIn The edges to be smoothed.
+         * @return The smoothed edges.
+         */
+        private List<EdgeComplete> chaikin(List<EdgeComplete> edgesIn) {
+            if (edgesIn.size() < 2) return edgesIn;
+            LinkedList<EdgeComplete> edgesOut = new LinkedList<>();
+            List<Node> nodes = new ArrayList<>();
+            for (int i=0; i<edgesIn.size()-1; ++i) {
+                EdgeComplete edgeOne = edgesIn.get(i);
+                EdgeComplete edgeTwo = edgesIn.get(i+1);
+                Node one = edgeOne.node1;
+                Node two = edgeOne.node2;
+                Node p2i  = new Node(0, 0.9375 * one.Latitude + 0.0625 * two.Latitude, 0.9375 * one.Longitude + 0.0625 * two.Longitude);
+                Node p2i1 = new Node(0, 0.0625 * one.Latitude + 0.9375 * two.Latitude, 0.0625 * one.Longitude + 0.9375 * two.Longitude);
+                nodes.add(p2i);
+                nodes.add(p2i1);
+            }
+
+            for (int i=0; i<nodes.size()-1; ++i) {
+                Node one = nodes.get(i);
+                Node two = nodes.get(i+1);
+
+                double pollution = (i & 2) == 2
+                        ? edgesIn.get(i/2).Pollution
+                        : (edgesIn.get(i/2).Pollution + edgesIn.get(i/2+1).Pollution) / 2;
+
+                EdgeComplete edge = new EdgeComplete(0,0,one,two,0, pollution);
+                edgesOut.addLast(edge);
+            }
+            EdgeComplete first = edgesOut.getFirst();
+            EdgeComplete last = edgesOut.getLast();
+            edgesOut.addFirst(new EdgeComplete(0,0, edgesIn.get(0).node1, first.node1, 0, edgesIn.get(0).Pollution));
+            edgesOut.addLast(new EdgeComplete(0,0, last.node2, edgesIn.get(edgesIn.size()-1).node2, 0, edgesIn.get(edgesIn.size()-1).Pollution));
+            return new ArrayList<>(edgesOut);
+        }
+    }
+
+
+    class SavedRouteItemClickListener implements OnItemClickListener {
+        @Override
+        public void onItemClick(String key) {
+            try {
+                List<EdgeComplete> route = savedRoutes.getRoute(key);
+                plotRoute(map, route);
+            } catch (RoutesNotLoadedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onItemLongClick(String key) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(main);
+            builder.setTitle(R.string.saved_route_delete_title);
+            builder.setMessage(key);
+
+            builder.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    savedRoutes.removeRoute(key);
+                    new WriteSavedRoutesAsync().execute();
+                }
+            });
+
+            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.cancel();
+                }
+            });
+
+            builder.show();
+        }
+    }
+
 
     /**
      * Show the appropriate page. Will require showing.hiding multiple components.
@@ -142,28 +405,38 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             // map page
             case PAGE_MAP:
                 showFragment(mapFragment);
-                hideFragment(dashboardFragment);
+                hideFragment(settingsFragment);
                 hideFragment(notificationsFragment);
                 distanceLabel.setVisibility(View.VISIBLE);
                 if (searchView != null) searchView.setVisibility(View.VISIBLE);
+                algorithmSelectGroup.setVisibility(View.GONE);
+                if (showSaveRouteButton) saveRouteButton.setVisibility(View.VISIBLE);
+                else saveRouteButton.setVisibility(View.GONE);
+                savedRoutesListView.setVisibility(View.GONE);
                 break;
 
-                // dashboard page
-            case PAGE_DASHBOARD:
+            // settings page
+            case PAGE_SETTINGS:
                 hideFragment(mapFragment);
-                showFragment(dashboardFragment);
+                showFragment(settingsFragment);
                 hideFragment(notificationsFragment);
                 distanceLabel.setVisibility(View.GONE);
                 if (searchView != null) searchView.setVisibility(View.GONE);
+                algorithmSelectGroup.setVisibility(View.VISIBLE);
+                saveRouteButton.setVisibility(View.GONE);
+                savedRoutesListView.setVisibility(View.GONE);
                 break;
 
             // notifications page
             case PAGE_NOTIFICATIONS:
                 hideFragment(mapFragment);
-                hideFragment(dashboardFragment);
+                hideFragment(settingsFragment);
                 showFragment(notificationsFragment);
                 distanceLabel.setVisibility(View.GONE);
                 if (searchView != null) searchView.setVisibility(View.GONE);
+                algorithmSelectGroup.setVisibility(View.GONE);
+                saveRouteButton.setVisibility(View.GONE);
+                savedRoutesListView.setVisibility(View.VISIBLE);
                 break;
         }
     }
@@ -209,8 +482,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                     showPage(Pages.PAGE_MAP);
                     return true;
 
-                case R.id.navigation_dashboard:
-                    showPage(Pages.PAGE_DASHBOARD);
+                case R.id.navigation_settings:
+                    showPage(Pages.PAGE_SETTINGS);
                     return true;
 
                 case R.id.navigation_notifications:
@@ -261,40 +534,8 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                     defaultLocation = new LatLng(location.getLatitude(), location.getLongitude());
                     panToLocation(map, defaultLocation);
                 }
-                new FetchGraphAsync().execute(defaultLocation, goal);
-                /*
-                List<Node> route;
-                try {
-                    // get a List<Node> of points on the route from defaultLocation to goal
-                    route = routeFinder.findRoute(Algorithm.POLLUTION_ONLY, defaultLocation.latitude, defaultLocation.longitude, goal.latitude, goal.longitude);
-
-                    // convert to an array
-                    LatLng[] points = new LatLng[route.size()];
-                    for (int i=0; i<points.length; ++i) {
-                        Node n = route.get(i);
-                        points[i] = new LatLng(n.Latitude, n.Longitude);
-                    }
-
-                    // calculate the distance of the route
-                    double dist = 0.0;
-                    for (int i=0; i<points.length-1; ++i) {
-                        dist += Util.distance(points[i], points[i+1]);
-                    }
-
-                    // plot teh route
-                    plotRoute(points);
-
-                    // display the route distance
-                    updateDistanceLabel(dist / 1000.0);
-                } catch (NotSetUpException e) {
-                    // assume connection failure
-                    e.printStackTrace();
-                    updateDistanceLabel("E: failed to setup graph.");
-                } catch (GraphNotConnectedException e) {
-                    // impossible to get to the destination
-                    e.printStackTrace();
-                    updateDistanceLabel("E: Failed to find a route.");
-                }*/
+                // context, route container, route finder container, map info container, algorithm container
+                new FetchGraphAsync(this, currentRoute, routeFinderContainer, mapInfoContainer, algorithmContainer, distanceLabel).execute(defaultLocation, goal);
             });
         } else {
             plotRoute(defaultLocation, goal);
@@ -362,6 +603,9 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // load any saved routes
+        new LoadSavedRoutesAsync().execute();
+
         // the route finder will be used to get a List<Node> representing the route between the
         // current location and the destination
         //routeFinder = new RouteFinder();
@@ -377,7 +621,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         if (mapFragment != null) mapFragment.getMapAsync(this);
 
-        dashboardFragment = getSupportFragmentManager().findFragmentById(R.id.dashboard);
+        settingsFragment = getSupportFragmentManager().findFragmentById(R.id.settings);
         notificationsFragment = getSupportFragmentManager().findFragmentById(R.id.notifications);
 
         navigationView = findViewById(R.id.navigation);
@@ -433,14 +677,22 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             distanceLabel.setPadding(2,2,2,2);
         }
 
+        algorithmSelectGroup = findViewById(R.id.algorithm_group);
+
+        saveRouteButton = findViewById(R.id.save_route_button);
+        savedRoutesListView = findViewById(R.id.saved_routes_list);
+
+        savedRoutesLayoutManager = new LinearLayoutManager(this);
+        savedRoutesListView.setLayoutManager(savedRoutesLayoutManager);
+        savedRoutesAdapter = new SavedRoutesAdapter(savedRoutes, new SavedRouteItemClickListener());
+        savedRoutesListView.setAdapter(savedRoutesAdapter);
+
+
         //updateDistanceLabel(defaultLocation, defaultLocation);
 
         // END initialise class variables
 
-        // show home fragment and hide others
-        showFragment(mapFragment);
-        hideFragment(dashboardFragment);
-        hideFragment(notificationsFragment);
+        showPage(Pages.PAGE_MAP);
     }
 
     private void clearMap() {
@@ -451,25 +703,33 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    public void plotRoute(List<EdgeComplete> edges) {
-        clearMap();
+    private void clearHeatMap() {
+        while (!polygons.isEmpty()) {
+            Polygon poly = polygons.get(0);
+            poly.remove();
+            polygons.remove(0);
+        }
+    }
 
-        double minPollution = Double.MAX_VALUE;
-        double maxPollution = Double.MIN_VALUE;
+    public void plotRoute(GoogleMap map, List<EdgeComplete> edges) {
+        clearMap();
 
         for (EdgeComplete edge : edges) {
             Polyline line = map.addPolyline(new PolylineOptions().add(
-                new LatLng(edge.node1.Latitude, edge.node1.Longitude), new LatLng(edge.node2.Latitude, edge.node2.Longitude)
-            ).width(5).color(
-                    //getPollutionColour(edge.Pollution)
-                    Color.BLUE
-            ));
+                    new LatLng(edge.node1.Latitude, edge.node1.Longitude), new LatLng(edge.node2.Latitude, edge.node2.Longitude)
+            ).width(7).color(
+                    getPollutionColour(edge.Pollution, mapInfoContainer, 1f)
+                    //Color.BLUE
+            ).endCap(new RoundCap()).startCap(new RoundCap()));
             polylines.add(line);
-            minPollution = minPollution < edge.Pollution ? minPollution : edge.Pollution;
-            maxPollution = maxPollution > edge.Pollution ? maxPollution : edge.Pollution;
         }
 
-        System.err.println(String.format(Locale.ENGLISH, "%f < pollution < %f", minPollution, maxPollution));
+        currentRoute.setRoute(edges);
+
+        showSaveRouteButton = true;
+        showPage(Pages.PAGE_MAP);
+
+        //System.err.println(String.format(Locale.ENGLISH, "%f < pollution < %f", minPollution, maxPollution));
     }
 
     /**
@@ -496,56 +756,48 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
      * @param pollution The amount of pollution
      * @return The rgba colour represented as an integer
      */
-    private int getPollutionColour(double pollution) {
-        double maxPollution = 300;
-        double minPollution = 90;
+    @SuppressLint("NewApi")
+    private int getPollutionColour(double pollution, MapInfoContainer mapInfoContainer, float alpha) {
+
+        float darkFactor = 0.9f;
+
+        double minPollution = mapInfoContainer.getPollutionPercentile5();
+        double maxPollution = mapInfoContainer.getPollutionPercentile95();
 
         double normalisedPollution = (pollution - minPollution) / (maxPollution - minPollution);
+        normalisedPollution *= 2;
+        normalisedPollution = normalisedPollution > 1f ? 1f : normalisedPollution;
+        normalisedPollution = normalisedPollution < 0f ? 0f : normalisedPollution;
+
+        float red;
+        float green;
+        float blue;
 
         if (normalisedPollution < 0.5) {
-            float red = 1.0f;
-            float green = 2 * (float) normalisedPollution;
-            green = green > 1.0f ? 1.0f : green;
-            green = green < 0.0f ? 0.0f : green;
-            float blue = 0f;
-            return Color.valueOf(red, green, blue).toArgb();
+            red = (float) (2 * normalisedPollution);
+            green = 1f;
+            blue = 0f;
         } else {
-            float red = 1f - 2 * ((float) normalisedPollution - 0.5f);
-            red = red > 1.0f ? 1.0f : red;
-            red = red < 0.0f ? 0.0f : red;
-            float green = 1f;
-            float blue = 0f;
-            return Color.valueOf(red, green, blue).toArgb();
+            red = 1f;
+            green = 1f - (float) (2 * (normalisedPollution - 0.5f));
+            blue = 0f;
         }
+
+        return Color.valueOf(darkFactor * red, darkFactor * green, darkFactor * blue, alpha).toArgb();
     }
 
-    /*
-    public void plotEdge(Edge edge) {
-        Node start = nodes.get(edge.Node1ID);
-        Node end = nodes.get(edge.Node2ID);
-        if (start == null || end == null) return;
-        Polyline line = map.addPolyline(
-                new PolylineOptions()
-                        .add(new LatLng(start.Latitude, start.Longitude), new LatLng(end.Latitude, end.Longitude))
-                        .width(5)
-                        .color(getPollutionColour(edge.Pollution))
-        );
-        polylines.add(line);
-    }*/
-
-    /*
-    public void plotWay(List<Edge> way) {
-        for (Edge edge : way) plotEdge(edge);
-    }*/
 
     /**
      * Called in response to a call to mapFragment.getMapAsync()
      *
      * @param googleMap The google map received.
      */
+    @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap googleMap) {
         map = googleMap;
+
+        map.setMaxZoomPreference(25f);
 
         if (hasLocationPermission()) map.setMyLocationEnabled(true);
         else map.setMyLocationEnabled(false);
@@ -560,6 +812,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
      * @param permissions The permissions.
      * @param grantResults The grant results.
      */
+    @SuppressLint("MissingPermission")
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {
@@ -578,6 +831,87 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                         map.setMyLocationEnabled(false);
                     }
                 }
+                break;
+        }
+    }
+
+    /**
+     * The callback for when the user changes their preferred algorithm.
+     *
+     * @param view The view clicked.
+     */
+    public void onAlgorithmButtonClicked(View view) {
+        boolean checked = ((RadioButton) view).isChecked();
+
+        /*
+         * We check which button was clicked by checking the id of the view that was clicked
+         * (and hence passed to this function).
+         *
+         * We then take the appropriate action by setting the routing algorithm to be that specified
+         * by the user.
+         */
+        switch (view.getId()) {
+            case R.id.radio_pollution_only:
+                algorithmContainer.setAlgorithm(Algorithm.POLLUTION_ONLY);
+                break;
+
+            case R.id.radio_distance_only:
+                algorithmContainer.setAlgorithm(Algorithm.DISTANCE_ONLY);
+                break;
+
+            case R.id.radio_mixed_1:
+                algorithmContainer.setAlgorithm(Algorithm.MIXED_1);
+                break;
+
+            case R.id.radio_mixed_2:
+                algorithmContainer.setAlgorithm(Algorithm.MIXED_2);
+                break;
+
+            case R.id.radio_mixed_3:
+                algorithmContainer.setAlgorithm(Algorithm.MIXED_3);
+                break;
+
+            case R.id.radio_avoid_pollution:
+                algorithmContainer.setAlgorithm(Algorithm.AVOID_POLLUTED);
+                break;
+        }
+    }
+
+    public void onSaveButtonClicked(View view) {
+        switch (view.getId()) {
+            case R.id.save_route_button:
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle(R.string.route_name_alert_title);
+                final EditText input = new EditText(this);
+                input.setInputType(InputType.TYPE_CLASS_TEXT);
+                builder.setView(input);
+
+                builder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String name = input.getText().toString();
+                        if (savedRoutes.hasRoute(name)) {
+                            dialog.dismiss();
+                            // handle clash
+                            AlertDialog.Builder errBuilder = new AlertDialog.Builder(main);
+                            errBuilder.setTitle(R.string.route_name_alert_title);
+                            errBuilder.setMessage(R.string.save_error_same_name);
+                            errBuilder.show();
+                        } else {
+                            savedRoutes.addRoute(name, new ArrayList<>(currentRoute.getRoute()));
+                            new WriteSavedRoutesAsync().execute();
+                        }
+                    }
+                });
+
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+
+                builder.show();
                 break;
         }
     }
