@@ -36,6 +36,7 @@ gradle-app.setting
 #Allow test csv and json files to be used for testing
 !database-server/tests/test.csv
 !test-map.json
+!database-server/tests/test-sensor-data.json
 
 #Ignore VS Code config
 .classpath
