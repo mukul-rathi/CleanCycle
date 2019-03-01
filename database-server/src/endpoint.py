@@ -1,7 +1,6 @@
-from flask import Flask
+from flask import Flask, request
 from flask_cors import CORS
 from db_connection import DBConnection
-
 
 
 app = Flask(__name__)
@@ -17,12 +16,16 @@ def query():
     db = DBConnection()
     return db.queryAirPollution()
 
-#@app.route('/insertSensorData', methods=['GET', 'POST']) 
-#def insertSensorData():
- #   db = DBConnection()
-  #  db.insertSensorData('test.csv')
-   # return db.getDBInfo()
-  
+@app.route('/insertSensorData', methods=['GET', 'POST']) 
+def insertSensorData():
+ 
+   db = DBConnection()
+   if (request.method == 'POST'):
+      sensorData = request.get_json().get("payload_fields").values() #this contains the air pollution data
+      if(sensorData):
+         return db.insertAirPollutionData(sensorData)
+            
+   return "Hello"  
 @app.route('/info', methods=['GET']) 
 def test():
     db = DBConnection()

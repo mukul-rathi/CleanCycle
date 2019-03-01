@@ -75,6 +75,14 @@ class DBConnection:
       self._cur.copy_from(output, table, null="") 
     self._conn.commit()
 
+  def insertAirPollutionData(self, data):
+      if(len(data)%4 != 0): #should be lat, long, PM10, PM2.5
+        return "Bad packets"
+      for i in range(0,len(data), 4):
+        self._cur.execute("INSERT INTO air_quality (uuid, Latitude, Longitude, PM10, PM25) VALUES (%s, %s, %s, %s, %s)", (uuid.uuid4().hex, *list(data)[i:i+4]))
+      self._conn.commit()
+      return "Successful insert"
+
 
   def queryAirPollution(self):
     self._cur.execute("SELECT Latitude, Longitude, PM10, PM25 FROM air_quality;")
