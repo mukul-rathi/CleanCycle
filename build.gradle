@@ -21,7 +21,7 @@ repositories {
 }
 
 tasks.withType(JavaExec) {
-    jvmArgs = ['-Xss1000m']
+    jvmArgs = ['-Xss5m']
 }
 
 dependencies {
