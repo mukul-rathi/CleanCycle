@@ -28,13 +28,17 @@ class FetchGraphAsync extends AsyncTask<LatLng, Void, List<EdgeComplete>> {
     private RouteContainer routeContainer;
     private RouteHandler routeHandler;
     private FetchGraphUtil util;
+    private String url;
+    private int port;
 
-    public FetchGraphAsync(Context context, RouteContainer routeContainer,
+    public FetchGraphAsync(RouteContainer routeContainer,
                            RouteFinderContainer routeFinderContainer,
                            MapInfoContainer mapInfoContainer,
                            AlgorithmContainer algorithmContainer,
                            RouteHandler routeHandler,
-                           FetchGraphUtil util
+                           FetchGraphUtil util,
+                           String url,
+                           int port
     ) {
         this.routeFinderContainer = routeFinderContainer;
         this.mapInfoContainer = mapInfoContainer;
@@ -42,6 +46,8 @@ class FetchGraphAsync extends AsyncTask<LatLng, Void, List<EdgeComplete>> {
         this.algorithmContainer = algorithmContainer;
         this.routeHandler = routeHandler;
         this.util = util;
+        this.url = url;
+        this.port = port;
     }
 
     @Override
@@ -52,7 +58,7 @@ class FetchGraphAsync extends AsyncTask<LatLng, Void, List<EdgeComplete>> {
             if (routeFinderContainer.getRouteFinder() == null) {
                 InputStream nodes = util.getNodesStream();
                 InputStream edges = util.getEdgesStream();
-                routeFinderContainer.setRouteFinder(new RouteFinder(nodes, edges, mapInfoContainer));
+                routeFinderContainer.setRouteFinder(new RouteFinder(url, port, mapInfoContainer));
             }
 
             List<EdgeComplete> cur = routeFinderContainer.getRouteFinder().findRouteEdges(

@@ -4,4 +4,7 @@ public class NotSetUpException extends Exception {
     NotSetUpException(){
 
     }
+    NotSetUpException(Exception e) {
+        super(e);
+    }
 }

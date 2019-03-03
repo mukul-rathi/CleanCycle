@@ -159,6 +159,9 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     enum Pages {PAGE_MAP, PAGE_SETTINGS, PAGE_NOTIFICATIONS}
 
     class WriteSavedRoutesAsync extends AsyncTask<Void,Void,Void> {
+        public WriteSavedRoutesAsync() {
+
+        }
 
         @Override
         protected Void doInBackground(Void... voids) {
@@ -488,7 +491,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                     panToLocation(map, defaultLocation);
                 }
                 // context, route container, route finder container, map info container, algorithm container
-                new FetchGraphAsync(this, currentRoute, routeFinderContainer, mapInfoContainer, algorithmContainer, defaultRouteHandler, defaultFetchGraphUtil).execute(defaultLocation, goal);
+                new FetchGraphAsync(currentRoute, routeFinderContainer, mapInfoContainer, algorithmContainer, defaultRouteHandler, defaultFetchGraphUtil, getResources().getString(R.string.socket_url), getResources().getInteger(R.integer.socket_port_graph)).execute(defaultLocation, goal);
             });
         } else {
             plotRoute(defaultLocation, goal);

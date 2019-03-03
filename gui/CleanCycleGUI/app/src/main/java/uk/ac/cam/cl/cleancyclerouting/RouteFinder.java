@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 
 import java.io.*;
 import java.lang.*;
+import java.net.Socket;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -17,23 +18,20 @@ public class RouteFinder {
     private Map<Long, Edge> edges = null;
     private RouteAlgorithm algorithm;
 
-    private ObjectInputStream edgesInput;
-    private ObjectInputStream nodesInput;
-    private Socket edgesSocket;
-    private Socket nodesSocket;
+    private ObjectInputStream graphInput;
+    private Socket graphSocket;
 
     private MapInfoContainer mapInfoContainer;
 
-    public RouteFinder(String address, int nodePort, int edgePort, MapInfoContainer mapInfoContainer){
+    public RouteFinder(String address, int nodePort, MapInfoContainer mapInfoContainer) throws NotSetUpException {
         try {
-            edgesSocket = new Socket(address, edgePort);
-            nodesSocket = new Socket(address, nodePort);
-            edgesInput = new ObjectInputStream(edgesSocket.getInputStream());
-            nodesInput = new ObjectInputStream(nodesSocket.getInputStream());
-            nodes = (Map<Long, Node>)deserialize(nodesInput);
-            edges = (Map<Long, Edge>)deserialize(edgesInput);
-        } catch(IOException exception){
-            exception.printStackTrace();
+            graphSocket = new Socket(address, nodePort);
+            graphInput = new ObjectInputStream(graphSocket.getInputStream());
+            nodes = (Map<Long, Node>)deserialize(graphInput);
+            edges = (Map<Long, Edge>)deserialize(graphInput);
+            graphInput.close();
+        } catch(IOException | ClassNotFoundException e){
+            throw new NotSetUpException(e);
         }
         algorithm = new LeastPollutedRA();
         this.mapInfoContainer = mapInfoContainer;
@@ -146,7 +144,6 @@ public class RouteFinder {
         Object object = objectInputStream.readObject();
         long serialVersionID = ObjectStreamClass.lookup(object.getClass()).getSerialVersionUID();
         //System.out.println("UID: " + serialVersionID);
-        objectInputStream.close();
         return object;
     }
 }
