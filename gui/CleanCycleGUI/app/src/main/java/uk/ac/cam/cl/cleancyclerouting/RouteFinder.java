@@ -17,14 +17,24 @@ public class RouteFinder {
     private Map<Long, Edge> edges = null;
     private RouteAlgorithm algorithm;
 
-    private InputStream nodesIs;
-    private InputStream edgesIs;
+    private ObjectInputStream edgesInput;
+    private ObjectInputStream nodesInput;
+    private Socket edgesSocket;
+    private Socket nodesSocket;
 
     private MapInfoContainer mapInfoContainer;
 
-    public RouteFinder(InputStream nodes, InputStream edges, MapInfoContainer mapInfoContainer){
-        nodesIs = nodes;
-        edgesIs = edges;
+    public RouteFinder(String address, int nodePort, int edgePort, MapInfoContainer mapInfoContainer){
+        try {
+            edgesSocket = new Socket(address, edgePort);
+            nodesSocket = new Socket(address, nodePort);
+            edgesInput = new ObjectInputStream(edgesSocket.getInputStream());
+            nodesInput = new ObjectInputStream(nodesSocket.getInputStream());
+            nodes = (Map<Long, Node>)deserialize(nodesInput);
+            edges = (Map<Long, Edge>)deserialize(edgesInput);
+        } catch(IOException exception){
+            exception.printStackTrace();
+        }
         algorithm = new LeastPollutedRA();
         this.mapInfoContainer = mapInfoContainer;
     }
@@ -69,64 +79,35 @@ public class RouteFinder {
     }
 
     private List<Long> findBestPath(Algorithm algo, Double lat1, Double long1, Double lat2, Double long2) throws NotSetUpException, GraphNotConnectedException{
-        if(nodes == null){
-            if(!fetchNodes()) throw new NotSetUpException(1);
+        if(edges == null || nodes == null){
+            throw new NotSetUpException();
         }
-        if(edges == null){
-            if(!fetchEdges()) throw new NotSetUpException(2);
-
-            List<Double> pollution = new ArrayList<>();
-            for (Edge edge : edges.values()) {
-                pollution.add(edge.Pollution);
-            }
-            Collections.sort(pollution);
-
-            int percentile5  =      pollution.size() / 20;
-            int percentile10 =      pollution.size() / 10;
-            int percentile90 =  9 * pollution.size() / 10;
-            int percentile95 = 19 * pollution.size() / 20;
-
-            mapInfoContainer.setPollutionPercentile5(pollution.get(percentile5));
-            mapInfoContainer.setPollutionPercentile10(pollution.get(percentile10));
-            mapInfoContainer.setPollutionPercentile90(pollution.get(percentile90));
-            mapInfoContainer.setPollutionPercentile95(pollution.get(percentile95));
-
-            /*for (Edge edge : edges.values()) {
-                if (edge.Pollution > 1000f) continue;
-                if (mapInfoContainer.getMaxPollution() < edge.Pollution) mapInfoContainer.setMaxPollution(edge.Pollution);
-                if (mapInfoContainer.getMinPollution() > edge.Pollution) mapInfoContainer.setMinPollution(edge.Pollution);
-            }*/
+        List<Double> pollution = new ArrayList<>();
+        for (Edge edge : edges.values()) {
+            pollution.add(edge.Pollution);
         }
+        Collections.sort(pollution);
+
+        int percentile5  =      pollution.size() / 20;
+        int percentile10 =      pollution.size() / 10;
+        int percentile90 =  9 * pollution.size() / 10;
+        int percentile95 = 19 * pollution.size() / 20;
+
+        mapInfoContainer.setPollutionPercentile5(pollution.get(percentile5));
+        mapInfoContainer.setPollutionPercentile10(pollution.get(percentile10));
+        mapInfoContainer.setPollutionPercentile90(pollution.get(percentile90));
+        mapInfoContainer.setPollutionPercentile95(pollution.get(percentile95));
+
+        /*for (Edge edge : edges.values()) {
+            if (edge.Pollution > 1000f) continue;
+            if (mapInfoContainer.getMaxPollution() < edge.Pollution) mapInfoContainer.setMaxPollution(edge.Pollution);
+            if (mapInfoContainer.getMinPollution() > edge.Pollution) mapInfoContainer.setMinPollution(edge.Pollution);
+        }*/
         Long from = findClosestNode(lat1, long1);
         Long to = findClosestNode(lat2, long2);
         return algorithm.getBestPath(algo, nodes, edges, from, to);
     }
 
-    @SuppressWarnings("unchecked")
-    private boolean fetchNodes(){
-        //this is a placeholder
-        try {
-            nodes = (Map<Long, Node>)deserialize(nodesIs);
-            return true;
-        } catch(Exception exc){
-            exc.printStackTrace();
-            return false;
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private boolean fetchEdges(){
-        //this is a placeholder
-        try {
-            edges = (Map<Long, Edge>)deserialize(edgesIs);
-
-            normalize();
-            return true;
-        } catch(Exception exc){
-            exc.printStackTrace();
-            return false;
-        }
-    }
     private void normalize(){
         double maxPollution = 0.0, maxDistance = 0.0;
         for(Object obj : edges.values()){
@@ -161,11 +142,10 @@ public class RouteFinder {
         return best;
     }
 
-    public static Object deserialize(InputStream is) throws IOException, ClassNotFoundException{
-        ObjectInputStream objectInputStream = new ObjectInputStream(is);
+    public static Object deserialize(ObjectInputStream objectInputStream) throws IOException, ClassNotFoundException{
         Object object = objectInputStream.readObject();
         long serialVersionID = ObjectStreamClass.lookup(object.getClass()).getSerialVersionUID();
-        System.out.println("UID: " + serialVersionID);
+        //System.out.println("UID: " + serialVersionID);
         objectInputStream.close();
         return object;
     }
