@@ -46,10 +46,15 @@ Sending the data this way would lead to using 76 bits per datapoint, so we could
 ## Headers
 In order to achieve better compression, we can use the fact that the user will not be travelling very fast. This means that all the latitude/longitude values will be fairly similar in each packet. In particular, we don't expect the most significant bits (MSBs) of the latitude and longitude values to change very much. This means we can put the MSBs of the latitude and longitude in a header that prepends the rest of the message. Subsequent datapoints can then skip the MSBs, and so only take up a part of the space they would take up otherwise.
 
-If we assume the user will travel less than 800m per packet, we can store 17 bits of the latitude and longitude in the header and 11 in each datapoint. Doing this allows for each header to denote a 434m square within which the user can move around with no packet-wise data inconsistency. However, if the user crosses one of the edges of the square, the header value won't update even though it should, so in isolation it would look like the user had "wrapped around" the square and suddenly appeared to be on the opposite side.  
+If we assume the user will travel less than 800m per packet, we can store 17 bits of the latitude and longitude in the header and 11 in each datapoint. Doing this allows for each header to denote a 434m square within which the user can move around with no packet-wise data inconsistency. However, if the user crosses one of the edges of the square, the MSBs for the new datapoint would be different form the ones in the header and the LSBs would change significantly from the previous datapoint's LSBs. This poses a problem because if we don't detect this, it looks like the user has "wrapped around" the square and has suddenly gone to the other side of it.  
+<br>
+Original Movement:  
+![Original movement](img/original.png)  
+After encoding:  
+![Movement after encoding](img/inPacket.png)  
+
 We can deal with this in the decoder by checking the difference between each point and if this distance exceeds half of the width of the square then we assume that they crossed an edge and just increase the least significant bit of the header for that point and all the subsequent ones.  
 It would be possible to put more of the bits in the header and fewer in the body of the packets, but this could lead to inconsistent data if a user moves very fast, so it was decided to compress more conservatively and have better assurances that the data is consistent.
-/////// FOR THIS SECTION, A DIAGRAM WITH SQUARES WHERE SQUARE SIDES ARE THE /////// CORRECT LENGTH MIGHT BE USEFUL
 
 It is possible to apply the same system for the PM10 and PM2.5 readings, but with an area as large as 434m it is possible that there are very high pollution differentials, and since the core principle of our project is to avoid high-pollution areas, we want to know if there are areas which have extremely high spikes of pollution, and this could be missed if we used the same system.
 
