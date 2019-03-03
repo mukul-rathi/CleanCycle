@@ -12,7 +12,7 @@ import CleanCycle.Analytics.EdgeComplete;
 import CleanCycle.Analytics.MapInfoContainer;
 import CleanCycle.Analytics.Node;
 
-public class RouteFinder{
+public class RouteFinder {
     private Map<Long, Node> nodes = null;
     private Map<Long, Edge> edges = null;
     private RouteAlgorithm algorithm;
