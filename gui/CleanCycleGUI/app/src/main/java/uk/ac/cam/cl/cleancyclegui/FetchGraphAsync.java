@@ -58,7 +58,7 @@ class FetchGraphAsync extends AsyncTask<LatLng, Void, List<EdgeComplete>> {
             if (routeFinderContainer.getRouteFinder() == null) {
                 InputStream nodes = util.getNodesStream();
                 InputStream edges = util.getEdgesStream();
-                routeFinderContainer.setRouteFinder(new RouteFinder(url, port, mapInfoContainer));
+                routeFinderContainer.setRouteFinder(new RouteFinder(url, port, mapInfoContainer, routeFinderContainer.getRouteFinderUtil()));
             }
 
             List<EdgeComplete> cur = routeFinderContainer.getRouteFinder().findRouteEdges(

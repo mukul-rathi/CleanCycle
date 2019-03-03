@@ -50,11 +50,13 @@ import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -64,6 +66,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import CleanCycle.Analytics.Edge;
 import CleanCycle.Analytics.EdgeComplete;
 import CleanCycle.Analytics.MapInfoContainer;
 import CleanCycle.Analytics.Node;
@@ -72,6 +75,7 @@ import uk.ac.cam.cl.cleancyclerouting.Algorithm;
 import uk.ac.cam.cl.cleancyclerouting.GraphNotConnectedException;
 import uk.ac.cam.cl.cleancyclerouting.NotSetUpException;
 import uk.ac.cam.cl.cleancyclerouting.RouteFinder;
+import uk.ac.cam.cl.cleancyclerouting.RouteFinderUtil;
 
 public class MainActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -105,8 +109,61 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     // places search autocomplete field
     private AutocompleteSupportFragment searchAutoComplete;
 
+    private RouteFinderUtil defaultRouteFinderUtil = new RouteFinderUtil() {
+        @Override
+        public InputStream getNodesInputStream() throws IOException {
+            try {
+                return openFileInput(getString(R.string.cache_nodes));
+            } catch (FileNotFoundException e) {
+                ObjectOutputStream oos = new ObjectOutputStream(getNodesOutputStream());
+                ObjectInputStream ois = new ObjectInputStream(getResources().openRawResource(R.raw.cached_nodes));
+                try {
+                    oos.writeObject(ois.readObject());
+                } catch (ClassNotFoundException e1) {
+                    e1.printStackTrace();
+                    throw new IOException(e1);
+                }
+                oos.flush();
+                ois.close();
+                oos.close();
+                return openFileInput(getString(R.string.cache_nodes));
+            }
+        }
+
+        @Override
+        public InputStream getEdgesInputStream() throws IOException {
+            try {
+                return openFileInput(getString(R.string.cache_edges));
+            } catch (FileNotFoundException e) {
+
+                ObjectOutputStream oos = new ObjectOutputStream(getEdgesOutputStream());
+                ObjectInputStream ois = new ObjectInputStream(getResources().openRawResource(R.raw.cached_edges));
+                try {
+                    oos.writeObject(ois.readObject());
+                } catch (ClassNotFoundException e1) {
+                    e1.printStackTrace();
+                    throw new IOException(e1);
+                }
+                oos.flush();
+                ois.close();
+                oos.close();
+                return openFileInput(getString(R.string.cache_edges));
+            }
+        }
+
+        @Override
+        public OutputStream getNodesOutputStream() throws IOException {
+            return openFileOutput(getString(R.string.cache_nodes), Context.MODE_PRIVATE);
+        }
+
+        @Override
+        public OutputStream getEdgesOutputStream() throws IOException {
+            return openFileOutput(getString(R.string.cache_edges), Context.MODE_PRIVATE);
+        }
+    };
+
     // route finder container, used to pass the route finder to various external asynchronous tasks
-    private final RouteFinderContainer routeFinderContainer = new RouteFinderContainer(null);
+    private final RouteFinderContainer routeFinderContainer = new RouteFinderContainer(null, defaultRouteFinderUtil);
 
     // google places client
     private PlacesClient placesClient;
@@ -155,72 +212,44 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         }
     };
 
-
-    enum Pages {PAGE_MAP, PAGE_SETTINGS, PAGE_NOTIFICATIONS}
-
-    class WriteSavedRoutesAsync extends AsyncTask<Void,Void,Void> {
-        public WriteSavedRoutesAsync() {
-
-        }
-
+    private SavedRoutesUtil defaultSavedRoutesUtil = new SavedRoutesUtil() {
         @Override
-        protected Void doInBackground(Void... voids) {
-            if (!saveRoutes()) updateDistanceLabel("E: failed to save routes");
-            else updateDistanceLabel("I: routes saved");
-            return null;
-        }
-
-        private boolean saveRoutes() {
-            try {
-                FileOutputStream fos = getApplicationContext().openFileOutput("saved_routes.obj", Context.MODE_PRIVATE);
-                ObjectOutputStream oos = new ObjectOutputStream(fos);
-                oos.writeObject(savedRoutes.getRoutes());
-                fos.close();
-                return true;
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }
-
-        @Override
-        public void onPostExecute(Void v) {
+        public void postSave() {
             savedRoutesAdapter.notifyDataSetChanged();
             System.out.println(savedRoutes.getRoutes());
         }
-    }
 
-    class LoadSavedRoutesAsync extends AsyncTask<Void,Void,Void> {
         @Override
-        protected Void doInBackground(Void... voids) {
-            Map<String,List<EdgeComplete>> routes = getSavedRoutes();
-            if (routes != null) {
-                for (Map.Entry<String,List<EdgeComplete>> entry : routes.entrySet()) {
-                    savedRoutes.addRoute(entry.getKey(), entry.getValue());
-                }
-            }
-            return null;
-        }
-
-        private Map<String,List<EdgeComplete>> getSavedRoutes() {
+        public InputStream getInputStream() {
             try {
-                FileInputStream fis = getApplicationContext().openFileInput("saved_routes.obj");
-                ObjectInputStream objStream = new ObjectInputStream(fis);
-                Object obj = objStream.readObject();
-
-                fis.close();
-
-                return (Map<String,List<EdgeComplete>>) obj;
-            } catch (IOException e) {
+                return getApplicationContext().openFileInput("saved_routes.obj");
+            } catch (FileNotFoundException e) {
                 e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            } catch (ClassCastException e) {
-                e.printStackTrace();
+                return null;
             }
-            return null;
         }
-    }
+
+        @Override
+        public OutputStream getOutputStream() {
+            try {
+                return getApplicationContext().openFileOutput("saved_routes.obj", Context.MODE_PRIVATE);
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        public void updateStatus(String msg) {
+            updateDistanceLabel(msg);
+        }
+    };
+
+
+    enum Pages {PAGE_MAP, PAGE_SETTINGS, PAGE_NOTIFICATIONS}
+
+
+
 
 
     /**
@@ -334,7 +363,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     savedRoutes.removeRoute(key);
-                    new WriteSavedRoutesAsync().execute();
+                    new WriteSavedRoutesAsync(savedRoutes, defaultSavedRoutesUtil).execute();
                 }
             });
 
@@ -560,7 +589,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
 
         // load any saved routes
-        new LoadSavedRoutesAsync().execute();
+        new LoadSavedRoutesAsync(savedRoutes, defaultSavedRoutesUtil).execute();
         //new DrawHeatMapAsync().execute();
 
         // the route finder will be used to get a List<Node> representing the route between the
@@ -859,7 +888,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                             errBuilder.show();
                         } else {
                             savedRoutes.addRoute(name, new ArrayList<>(currentRoute.getRoute()));
-                            new WriteSavedRoutesAsync().execute();
+                            new WriteSavedRoutesAsync(savedRoutes, defaultSavedRoutesUtil).execute();
                         }
                     }
                 });

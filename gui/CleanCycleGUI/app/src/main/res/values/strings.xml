@@ -15,4 +15,6 @@
     <string name="saved_route_delete_title">Delete this route?</string>
     <string name="save_route_button_text">Save route</string>
     <string name="save_error_same_name">Failed to save route as one with this name already exists.</string>
+    <string name="cache_nodes">cached_nodes.obj</string>
+    <string name="cache_edges">cached_edges.obj</string>
 </resources>

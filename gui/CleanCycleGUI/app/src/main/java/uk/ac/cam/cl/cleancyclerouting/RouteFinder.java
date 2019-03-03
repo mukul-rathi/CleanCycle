@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 
 import java.io.*;
 import java.lang.*;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,18 +24,69 @@ public class RouteFinder {
 
     private MapInfoContainer mapInfoContainer;
 
-    public RouteFinder(String address, int nodePort, MapInfoContainer mapInfoContainer) throws NotSetUpException {
+    private RouteFinderUtil routeFinderUtil;
+
+    public RouteFinder(String address, int nodePort, MapInfoContainer mapInfoContainer, RouteFinderUtil routeFinderUtil) throws NotSetUpException {
+        this.routeFinderUtil = routeFinderUtil;
         try {
             graphSocket = new Socket(address, nodePort);
             graphInput = new ObjectInputStream(graphSocket.getInputStream());
             nodes = (Map<Long, Node>)deserialize(graphInput);
             edges = (Map<Long, Edge>)deserialize(graphInput);
             graphInput.close();
+        } catch (ConnectException e) {
+            try {
+                nodes = loadCachedNodes();
+                edges = loadCachedEdges();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+                System.err.println("NO GRAPH CACHE FOUND");
+                throw new NotSetUpException(e1);
+            }
         } catch(IOException | ClassNotFoundException e){
             throw new NotSetUpException(e);
         }
         algorithm = new LeastPollutedRA();
         this.mapInfoContainer = mapInfoContainer;
+    }
+
+    public void cacheNodes() throws IOException {
+        ObjectOutputStream oos = new ObjectOutputStream(routeFinderUtil.getNodesOutputStream());
+        oos.writeObject(nodes);
+        oos.flush();
+        oos.close();
+    }
+
+    public void cacheEdges() throws IOException {
+        ObjectOutputStream oos = new ObjectOutputStream(routeFinderUtil.getEdgesOutputStream());
+        oos.writeObject(edges);
+        oos.flush();
+        oos.close();
+    }
+
+    Map<Long, Node> loadCachedNodes() throws IOException {
+        ObjectInputStream ois = new ObjectInputStream(routeFinderUtil.getNodesInputStream());
+        Map<Long, Node> ns;
+        try {
+             ns = (Map<Long, Node>) ois.readObject();
+        } catch (ClassNotFoundException | ClassCastException e) {
+            throw new IOException(e);
+        }
+        ois.close();
+        return ns;
+    }
+
+    Map<Long, Edge> loadCachedEdges() throws IOException {
+        ObjectInputStream ois = new ObjectInputStream(routeFinderUtil.getEdgesInputStream());
+        Map<Long,Edge> es;
+        try {
+            es = (Map<Long,Edge>) ois.readObject();
+        } catch (ClassNotFoundException | ClassCastException e) {
+            e.printStackTrace();
+            throw new IOException(e);
+        }
+        ois.close();
+        return es;
     }
 
     @SuppressLint("NewApi")
