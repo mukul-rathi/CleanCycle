@@ -69,9 +69,11 @@ class DBConnection:
             "CREATE TABLE IF NOT EXISTS weather(uuid TEXT PRIMARY KEY, DewPt FLOAT8, Humid FLOAT8, MxWSpd FLOAT8, Press FLOAT8, Rain FLOAT8, Sun FLOAT8, Temp_CBS FLOAT8, Temp_CL FLOAT8, WindDr FLOAT8, WindSp FLOAT8)"
         )
 
+        for table, schema in Database.schemas.items():
         self._cur.execute(
-            "CREATE TABLE IF NOT EXISTS time(uuid TEXT PRIMARY KEY, Date FLOAT8, Counter FLOAT8,Millis FLOAT8, Start TEXT, Time FLOAT8)"
-        )
+                sql.SQL("CREATE TABLE IF NOT EXISTS {} {}").format(
+                    sql.Identifier(table), sql.SQL(schema)))
+        self._conn.commit()
 
         self._cur.execute(
             "CREATE TABLE IF NOT EXISTS system_status(uuid TEXT PRIMARY KEY, BatteryVIN FLOAT8, Satellites FLOAT8, gpsUpdated FLOAT8, nAcc FLOAT8)"
