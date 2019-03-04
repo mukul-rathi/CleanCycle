@@ -166,3 +166,17 @@ class TestDBConnection():
         """
         sensor_data = [1.1, 1.2]
         pytest.raises(IOError, self._db.insert_sensor_data, sensor_data)
+
+    @staticmethod
+    def test_bad_database_connection():
+        """
+        Tests if an IOError is raised after the max number of retries is exceeded when connecting to a database.
+
+        Uses dependency injection (mocks a database address)
+        """
+
+        pytest.raises(
+            IOError,
+            db_connection.DBConnection,
+            host_addr="fakehost:1000",
+            max_num_tries=2)

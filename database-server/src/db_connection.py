@@ -85,8 +85,8 @@ class DBConnection:
     def __init__(self,
                  db_user=os.environ['POSTGRES_USER'],
                  db_password=os.environ['POSTGRES_PASSWORD'],
-                 host_name="database",
-                 port=5432):
+                 host_addr="database:5432",
+                 max_num_tries=20):
         """
         Initiates a connection with the PostgreSQL database as the given user on the given port.
 
@@ -96,11 +96,10 @@ class DBConnection:
         Args:
             db_user: the name of the user connecting to the database.
             db_password: the password of said user.
-            host_name: the host address of the database.
-                Here, since database container is on same docker network,
-                Docker resolves "database" to the address.
-            port: the port on which the database is hosted 
-            For the Postgres docker container, the default port is 5432.
+            host_addr: (of the form <host>:<port>) the address where the database is hosted 
+            For the Postgres docker container, the default port is 5432 and the host is "database".
+            Docker resolves "database" to the internal subnet URL of the database container.
+            max_num_tries: the maximum number of tries the __init__ method should try to connect to the database for.
         Returns: None (since __init__)
         Raises:
             IOError: An error occurred accessing the database.
@@ -108,9 +107,8 @@ class DBConnection:
         """
         db_name = os.environ['POSTGRES_DB']
 
-        engine_params = f"postgresql+psycopg2://{db_user}:{db_password}@{host_name}:{port}/{db_name}"
+        engine_params = f"postgresql+psycopg2://{db_user}:{db_password}@{host_addr}/{db_name}"
         num_tries = 1
-        max_num_tries = 20  #this can be tweaked accordingly
 
         while True:
             try:
