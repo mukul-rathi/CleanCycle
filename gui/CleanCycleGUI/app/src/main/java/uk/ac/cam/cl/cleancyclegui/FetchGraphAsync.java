@@ -23,15 +23,27 @@ import uk.ac.cam.cl.cleancyclerouting.RouteFinder;
  */
 class FetchGraphAsync extends AsyncTask<LatLng, Void, List<EdgeComplete>> {
     private RouteFinderContainer routeFinderContainer;
+
+    // contains information such as the maximum and minimum pollution values
     private MapInfoContainer mapInfoContainer;
+
+    // contains the algorithm to be used by the routing system
     private AlgorithmContainer algorithmContainer;
-    private RouteContainer routeContainer;
+
+    // used so that the route can be used to manipulate GUI elements which are only accessible by
+    // MainActivity
     private RouteHandler routeHandler;
+
+    // utility functions to update GUI elements
     private FetchGraphUtil util;
+
+    // the URL of the socket
     private String url;
+
+    // the port number of the socket
     private int port;
 
-    public FetchGraphAsync(RouteContainer routeContainer,
+    public FetchGraphAsync(
                            RouteFinderContainer routeFinderContainer,
                            MapInfoContainer mapInfoContainer,
                            AlgorithmContainer algorithmContainer,
@@ -42,7 +54,6 @@ class FetchGraphAsync extends AsyncTask<LatLng, Void, List<EdgeComplete>> {
     ) {
         this.routeFinderContainer = routeFinderContainer;
         this.mapInfoContainer = mapInfoContainer;
-        this.routeContainer = routeContainer;
         this.algorithmContainer = algorithmContainer;
         this.routeHandler = routeHandler;
         this.util = util;
@@ -56,8 +67,6 @@ class FetchGraphAsync extends AsyncTask<LatLng, Void, List<EdgeComplete>> {
         try {
             util.updateLabel("I: finding route");
             if (routeFinderContainer.getRouteFinder() == null) {
-                InputStream nodes = util.getNodesStream();
-                InputStream edges = util.getEdgesStream();
                 routeFinderContainer.setRouteFinder(new RouteFinder(url, port, mapInfoContainer, routeFinderContainer.getRouteFinderUtil()));
             }
 
@@ -71,8 +80,8 @@ class FetchGraphAsync extends AsyncTask<LatLng, Void, List<EdgeComplete>> {
             // perform Chaikin here because this keeps the computation asynchronous and prevents
             // frames from being missed (the UI is the main thread)
             for (int i=0; i<3; ++i) cur = chaikin(cur);
+            new CacheGraphAsync().execute(routeFinderContainer);
 
-            routeContainer.setRoute(cur);
             return cur;
 
         } catch (NotSetUpException e) {
@@ -80,11 +89,16 @@ class FetchGraphAsync extends AsyncTask<LatLng, Void, List<EdgeComplete>> {
             util.updateLabel( "E: Graph not set up.");
         } catch (GraphNotConnectedException e) {
             e.printStackTrace();
-            util.updateLabel("E: Graph not connected.");
+            util.updateLabel("E: Route to destination not found.");
         }
         return null;
     }
 
+    /**
+     * Once the route is found, handle it using the supplied handler.
+     *
+     * @param route
+     */
     @Override
     protected void onPostExecute(List<EdgeComplete> route) {
         routeHandler.handleRoute(route);

@@ -11,6 +11,7 @@ import java.util.List;
 import CleanCycle.Analytics.Point;
 
 public class FetchPointsAsync extends AsyncTask<Void,Void,List<Point>> {
+    // a handler to do something with the fetched points, possibly updating the GUI
     private PointsHandler pointsHandler;
 
     public FetchPointsAsync(PointsHandler pointsHandler) {

@@ -78,7 +78,8 @@ import uk.ac.cam.cl.cleancyclerouting.RouteFinder;
 import uk.ac.cam.cl.cleancyclerouting.RouteFinderUtil;
 
 public class MainActivity extends FragmentActivity implements OnMapReadyCallback {
-
+    // pages to be displayed
+    enum Pages {PAGE_MAP, PAGE_SETTINGS, PAGE_NOTIFICATIONS}
 
     private List<Polyline> polylines = new ArrayList<>();
     private List<Polygon> polygons = new ArrayList<>();
@@ -115,18 +116,9 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             try {
                 return openFileInput(getString(R.string.cache_nodes));
             } catch (FileNotFoundException e) {
-                ObjectOutputStream oos = new ObjectOutputStream(getNodesOutputStream());
-                ObjectInputStream ois = new ObjectInputStream(getResources().openRawResource(R.raw.cached_nodes));
-                try {
-                    oos.writeObject(ois.readObject());
-                } catch (ClassNotFoundException e1) {
-                    e1.printStackTrace();
-                    throw new IOException(e1);
-                }
-                oos.flush();
-                ois.close();
-                oos.close();
-                return openFileInput(getString(R.string.cache_nodes));
+                //createCacheFile(getResources().openRawResource(R.raw.cached_nodes), getNodesOutputStream());
+                //return openFileInput(getString(R.string.cache_nodes));
+                return getResources().openRawResource(R.raw.cached_nodes);
             }
         }
 
@@ -135,19 +127,9 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             try {
                 return openFileInput(getString(R.string.cache_edges));
             } catch (FileNotFoundException e) {
-
-                ObjectOutputStream oos = new ObjectOutputStream(getEdgesOutputStream());
-                ObjectInputStream ois = new ObjectInputStream(getResources().openRawResource(R.raw.cached_edges));
-                try {
-                    oos.writeObject(ois.readObject());
-                } catch (ClassNotFoundException e1) {
-                    e1.printStackTrace();
-                    throw new IOException(e1);
-                }
-                oos.flush();
-                ois.close();
-                oos.close();
-                return openFileInput(getString(R.string.cache_edges));
+                //createCacheFile(getResources().openRawResource(R.raw.cached_edges), getEdgesOutputStream());
+                //return openFileInput(getString(R.string.cache_edges));
+                return getResources().openRawResource(R.raw.cached_edges);
             }
         }
 
@@ -185,21 +167,29 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
     private boolean showSaveRouteButton = false;
 
+    /**
+     * Default route handler used to handle routes received from the FetchGraphAsync task
+     */
     private RouteHandler defaultRouteHandler = new RouteHandler() {
         @Override
         public void handleRoute(List<EdgeComplete> route) {
             if (route == null) return;
             updateDistanceLabel("I: plotting route");
+            currentRoute.setRoute(route);
             plotRoute(map, route);
             updateDistanceLabel("I: route plotted");
         }
     };
 
+    /**
+     * Utility functions used to fetch the graph
+     */
     private FetchGraphUtil defaultFetchGraphUtil = new FetchGraphUtil() {
         @Override
         public void updateLabel(String msg) {
             updateDistanceLabel(msg);
         }
+
 
         @Override
         public InputStream getEdgesStream() {
@@ -212,6 +202,10 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         }
     };
 
+    /**
+     * Utility functions to be used by the async tasks used in order to save/load the user's
+     * favourite routes.
+     */
     private SavedRoutesUtil defaultSavedRoutesUtil = new SavedRoutesUtil() {
         @Override
         public void postSave() {
@@ -222,7 +216,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         @Override
         public InputStream getInputStream() {
             try {
-                return getApplicationContext().openFileInput("saved_routes.obj");
+                return openFileInput("saved_routes.obj");
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
                 return null;
@@ -232,7 +226,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         @Override
         public OutputStream getOutputStream() {
             try {
-                return getApplicationContext().openFileOutput("saved_routes.obj", Context.MODE_PRIVATE);
+                return openFileOutput("saved_routes.obj", Context.MODE_PRIVATE);
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
                 return null;
@@ -244,12 +238,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
             updateDistanceLabel(msg);
         }
     };
-
-
-    enum Pages {PAGE_MAP, PAGE_SETTINGS, PAGE_NOTIFICATIONS}
-
-
-
 
 
     /**
@@ -300,7 +288,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
         private List<Point> fetchPoints() {
             try {
-                Socket socket = new Socket("b96d3eac.ngrok.io", 54334);
+                Socket socket = new Socket(getString(R.string.socket_url), getResources().getInteger(R.integer.socket_port_heatmap));
                 ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
                 List<Point> points = (List<Point>) ois.readObject();
                 ois.close();
@@ -519,8 +507,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
                     defaultLocation = new LatLng(location.getLatitude(), location.getLongitude());
                     panToLocation(map, defaultLocation);
                 }
-                // context, route container, route finder container, map info container, algorithm container
-                new FetchGraphAsync(currentRoute, routeFinderContainer, mapInfoContainer, algorithmContainer, defaultRouteHandler, defaultFetchGraphUtil, getResources().getString(R.string.socket_url), getResources().getInteger(R.integer.socket_port_graph)).execute(defaultLocation, goal);
+                new FetchGraphAsync(routeFinderContainer, mapInfoContainer, algorithmContainer, defaultRouteHandler, defaultFetchGraphUtil, getResources().getString(R.string.socket_url), getResources().getInteger(R.integer.socket_port_graph)).execute(defaultLocation, goal);
             });
         } else {
             plotRoute(defaultLocation, goal);
@@ -717,8 +704,6 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
 
         showSaveRouteButton = true;
         showPage(Pages.PAGE_MAP);
-
-        //System.err.println(String.format(Locale.ENGLISH, "%f < pollution < %f", minPollution, maxPollution));
     }
 
     /**
@@ -738,9 +723,7 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     /**
-     * TODO: normalise pollution input based on maximum and minimum values (i.e. find maximum and minimum pollution values).
-     * TODO: think of a better scaling than linear as it has the effect that as pollution gets worse, areas with previously red pollution start fading to green
-     *       maybe just use thresholding?
+     * Get colour that represents the level of pollution.
      *
      * @param pollution The amount of pollution
      * @return The rgba colour represented as an integer
@@ -866,6 +849,12 @@ public class MainActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+
+    /**
+     * Handle clicks of the save route button.
+     *
+     * @param view The view that was clicked.
+     */
     public void onSaveButtonClicked(View view) {
         switch (view.getId()) {
             case R.id.save_route_button:

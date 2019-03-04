@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
+/**
+ * An asynchronous task to write the saved routes to a file.
+ */
 public class WriteSavedRoutesAsync extends AsyncTask<Void,Void,Void> {
     private SavedRoutes savedRoutes;
     private SavedRoutesUtil savedRoutesUtil;

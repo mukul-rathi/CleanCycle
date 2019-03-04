@@ -10,6 +10,9 @@ import java.util.Map;
 
 import CleanCycle.Analytics.EdgeComplete;
 
+/**
+ * An asynchronous task used to load the routes previously saved by the user.
+ */
 public class LoadSavedRoutesAsync extends AsyncTask<Void,Void,Void> {
     private SavedRoutes savedRoutes;
     private SavedRoutesUtil savedRoutesUtil;
@@ -30,6 +33,11 @@ public class LoadSavedRoutesAsync extends AsyncTask<Void,Void,Void> {
         return null;
     }
 
+    /**
+     * Get the routes which have been saved to a file.
+     *
+     * @return The routes as a Map: Route name (String) -> Route (List of EdgeComplete)
+     */
     private Map<String,List<EdgeComplete>> getSavedRoutes() {
         try {
             InputStream fis = savedRoutesUtil.getInputStream();
