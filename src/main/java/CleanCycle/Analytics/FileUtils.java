@@ -15,8 +15,11 @@ import java.util.Map;
 
 import static CleanCycle.Analytics.AnalyticsUtils.haversineDistance;
 
+/**
+ * Class for reading and writing data from files. Not all of these functions
+ * are used in the final product, but readDataFromJSON() is.
+ */
 public class FileUtils {
-
     /**
      * Read in the large, uncondensed CSV file and fills up the list of pollution
      * data points.
@@ -92,9 +95,7 @@ public class FileUtils {
             /* First we initialize the JSON objects to be used. */
 
             JSONParser parser = new JSONParser();
-
             JSONObject container = (JSONObject) parser.parse(new FileReader(filename));
-
             JSONArray array = (JSONArray) container.get("elements");
 
             /*
@@ -152,7 +153,9 @@ public class FileUtils {
                     }
                 }
             }
-        } catch (IOException | ParseException e) {
+        }
+
+        catch (IOException | ParseException e) {
             System.out.println("Error parsing JSON file.");
             e.printStackTrace();
         }

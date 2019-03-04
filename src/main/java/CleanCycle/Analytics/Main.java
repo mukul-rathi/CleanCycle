@@ -25,6 +25,9 @@ import static CleanCycle.Analytics.AnalyticsUtils.*;
 import static CleanCycle.Analytics.FileUtils.getPointsFromBigCSV;
 import static CleanCycle.Analytics.FileUtils.readDataFromJSON;
 
+/**
+ * The main class for the analytics code.
+ */
 public class Main {
     /**
      * This function will load the set of points from the database
@@ -39,10 +42,12 @@ public class Main {
 
         while(!success) {
             try {
+                /* Open an HTTP connection to Mukul's endpoint. */
                 HttpURLConnection connection = ((HttpURLConnection) new URL("http://endpoint/analytics").openConnection());
                 connection.setRequestMethod("GET");
                 int responseCode = connection.getResponseCode();
                 if (responseCode == HttpURLConnection.HTTP_OK) {
+                    /* Get the entire response using a string builder. */
                     BufferedReader inReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                     StringBuilder jsonStringBuilder = new StringBuilder();
                     String line;
@@ -94,7 +99,8 @@ public class Main {
     static final Map<Long, Edge> edges = new HashMap<>();
     static final List<Point> points = new ArrayList<>();
 
-    /*public static void getPointsTest() {
+    /* This was a test to make sure use of sockets via ngrok TCP was working.
+    public static void getPointsTest() {
         try {
             Socket socket = new Socket("f2d74e41.ngrok.io", 80);
             ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
@@ -105,7 +111,8 @@ public class Main {
         catch(IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
-    }*/
+    }
+    */
 
     /**
      * The main function is the main thread of the module.
@@ -120,13 +127,13 @@ public class Main {
 
         readDataFromJSON("map.json", nodes, edges);
 
-        /* Filter the largest component out of the slightly mangled OSM data */
+        /* Filter the largest component out of the slightly mangled OSM data. */
         List<Set<Long>> components = getComponents(nodes, edges);
         Collections.sort(components, new AnalyticsUtils.SizeComparator());
         Collections.reverse(components);
         Set<Long> IDsOfMainComponent = components.get(0);
 
-        /* Now we remove all nodes and edges that reference non-main components */
+        /* Now we remove all nodes and edges that reference non-main components. */
 
         Iterator nodeIt = nodes.keySet().iterator();
         while (nodeIt.hasNext()) {
@@ -145,7 +152,7 @@ public class Main {
             }
         }
 
-        /* Perform the analysis algorithm to find pollution amounts per edge */
+        /* Perform the analysis algorithm to find pollution amounts per edge. */
         pointToEdge(points, edges, nodes);
 
         /* This thread sends the graph of nodes and edges to the route planning backend. */
@@ -202,8 +209,8 @@ public class Main {
         sendPointsThread.setDaemon(true);
         sendPointsThread.start();
 
-        /* This part writes the edges and notes to an output file, from before sockets were set up */
-        /*
+        /* This part wrote the edges and notes to an output file, from before sockets were set up.
+
         ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("nodes.obj"));
         oos.writeObject(nodes);
         oos.close();
@@ -249,8 +256,7 @@ public class Main {
     }
 
     /* This part of the code was mostly written by Vladimir - I just cleaned it up a bit and
-    adapted it to allow a list of connected components to be returned
-     */
+    adapted it to allow a list of connected components to be returned. */
 
     static final Set<Long> visited = new HashSet<>();
     static final Set<Long> tempVisited = new HashSet<>();
