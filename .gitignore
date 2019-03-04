@@ -33,6 +33,9 @@ gradle-app.setting
 #Ignore pytest output
 .pytest_cache/
 
+#Ignore coverage output
+.coverage
+htmlcov/
 #Allow test csv and json files to be used for testing
 !database-server/tests/test.csv
 !test-map.json
