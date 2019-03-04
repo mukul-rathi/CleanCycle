@@ -1,0 +1,10 @@
+[run]
+branch = True
+omit = */endpoint.py 
+#we're testing the endpoint file in the other container
+
+[report]
+fail_under = 90
+
+[html]
+directory=htmlcov
