@@ -1,6 +1,7 @@
 import pytest
 import requests
 import os
+import json
 class TestEndpoint(object):
     endpoint = "http://endpoint"
 
@@ -26,3 +27,11 @@ class TestEndpoint(object):
         expectedTables = ["position","weather", "time", "system_status", "air_quality"]
         for table in expectedTables:
             assert table in tablesInfo.keys()
+
+    def test_insert_sensor_data(self):
+        with open("test-sensor-data.json", "r") as f:
+            sensorData = json.load(f)
+        r = requests.post(url=(self.endpoint +"/insertSensorData"), json=sensorData)
+        assert r.ok
+        
+

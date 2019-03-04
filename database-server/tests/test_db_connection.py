@@ -29,7 +29,6 @@ class TestDBConnection():
         return rowsEqual
 
     def test_insertSensorData(self):
-        self._db.clearData() #clear data in database
         self._db.insertSensorData("test.csv")
         df = pd.read_csv("test.csv")
         tables = json.loads(self._db.getDBInfo())
@@ -56,6 +55,13 @@ class TestDBConnection():
         for table in tables.keys():
             assert len(tables[table])==0 #no values in database
 
-    
+    def test_insertAirPollutionData(self):
+        with open("test-sensor-data.json", "r") as f:
+            sensorData = list(json.load(f).get("payload_fields").values())
+        self._db.insertAirPollutionData(sensorData)
+        dataPoints = [sensorData[i:i+4] for i in range(0, len(sensorData), 4)]
+        dbrecords = json.loads(self._db.queryAirPollution())
+        for dataPoint in dataPoints:
+           assert any([self.checkRowEquality(dataPoint, record) for record in dbrecords]) #check if any record matches data-point
     
 
