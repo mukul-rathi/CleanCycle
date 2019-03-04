@@ -28,7 +28,7 @@ class Database:
         columns: dictionary mapping table names to column names
         schemas: dictionary mapping table names to schema
     """
-    columns = {
+    _columns = {
         "position": [
             "uuid", "AccX", "AccY", "AccZ", "Acc_mag", "Altitude", "GyroX",
             "GyroY", "GyroZ", "Gyro_mag", "Latitude", "Longitude", "Speed"
@@ -43,7 +43,7 @@ class Database:
         "air_quality": ["uuid", "Latitude", "Longitude", "PM10", "PM2.5"]
     }
 
-    schemas = {
+    _schemas = {
         "position":
         "(uuid TEXT PRIMARY KEY, AccX FLOAT8, AccY FLOAT8 , AccZ FLOAT8, Acc_mag FLOAT8, Altitude FLOAT8, GyroX FLOAT8, GyroY FLOAT8, GyroZ FLOAT8, Gyro_mag FLOAT8, Latitude FLOAT8, Longitude FLOAT8, Speed FLOAT8)",
         "weather":
@@ -55,6 +55,20 @@ class Database:
         "air_quality":
         "(uuid TEXT PRIMARY KEY, Latitude FLOAT8,  Longitude FLOAT8, PM10 FLOAT8, PM2_5 FLOAT8)"
     }
+
+    @classmethod
+    def get_columns(cls):
+        """ 
+        Getter method for columns
+        """
+        return cls._columns
+
+    @classmethod
+    def get_schemas(cls):
+        """ 
+        Getter method for schemas
+        """
+        return cls._schemas
 
 
 class DBConnection:
@@ -69,7 +83,6 @@ class DBConnection:
     """
 
     def __init__(self,
-                 db_name=os.environ['POSTGRES_DB'],
                  db_user=os.environ['POSTGRES_USER'],
                  db_password=os.environ['POSTGRES_PASSWORD'],
                  host_name="database",
@@ -81,8 +94,7 @@ class DBConnection:
       
 
         Args:
-            db_name: the name of the database
-            db_user: the name of the user connecting to the          database.
+            db_user: the name of the user connecting to the database.
             db_password: the password of said user.
             host_name: the host address of the database.
                 Here, since database container is on same docker network,
@@ -94,6 +106,8 @@ class DBConnection:
             IOError: An error occurred accessing the database.
             Raised if after the max number of tries the connection still hasn't been established.
         """
+        db_name = os.environ['POSTGRES_DB']
+
         engine_params = f"postgresql+psycopg2://{db_user}:{db_password}@{host_name}:{port}/{db_name}"
         num_tries = 1
         max_num_tries = 20  #this can be tweaked accordingly
@@ -122,7 +136,7 @@ class DBConnection:
            
         Returns: None (since commits execution result to database)
         """
-        for table, schema in Database.schemas.items():
+        for table, schema in Database.get_schemas().items():
             self._cur.execute(
                 sql.SQL("CREATE TABLE IF NOT EXISTS {} {}").format(
                     sql.Identifier(table), sql.SQL(schema)))
@@ -147,8 +161,8 @@ class DBConnection:
 
     #CSV for each table converted to a string and copied across to the database.
     #Alternative could be to do Batch Insert
-        for table in Database.columns:
-            table_df = data[Database.columns[table]]
+        for table in Database.get_columns():
+            table_df = data[Database.get_columns()[table]]
             output = io.StringIO()
             table_df.to_csv(output, sep='\t', header=False, index=False)
             output.seek(0)

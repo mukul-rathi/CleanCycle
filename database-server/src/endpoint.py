@@ -8,10 +8,13 @@ The endpoint provides a clean REST API for other sections of the project to quer
 from flask import Flask, request
 from flask_cors import CORS
 
-#local application imports
-import db_connection
+#local application imports - note can't use full package name as it varies between containers
 
-app = Flask(__name__)
+import db_connection  # pylint: disable=E0401
+
+#note that Pylint disable C0103 refes to disabling the "doesn't conform to snake_case" messages.
+
+app = Flask(__name__)  #pylint: disable=C0103
 CORS(app)
 
 
@@ -29,7 +32,7 @@ def database_info():
 
     """
     try:
-        db = db_connection.DBConnection()
+        db = db_connection.DBConnection()  #pylint: disable=C0103
     except IOError:
         return "Database connection not possible", 504, {
             'ContentType': 'text/plain'
@@ -51,23 +54,7 @@ def connection_stats():
 
     """
     try:
-        db = db_connection.DBConnection()
-    except IOError:
-        return "Database connection not possible", 504, {
-            'ContentType': 'text/plain'
-        }
-    return db.get_connection_stats(), 200, {'ContentType': 'application/json'}
-
-    try:
-        db = db_connection.DBConnection()
-    except IOError:
-        return "Database connection not possible", 504, {
-            'ContentType': 'text/plain'
-        }
-    return db.get_database_info(), 200, {'ContentType': 'application/json'}
-
-    try:
-        db = db_connection.DBConnection()
+        db = db_connection.DBConnection()  #pylint: disable=C0103
     except IOError:
         return "Database connection not possible", 504, {
             'ContentType': 'text/plain'
@@ -89,7 +76,7 @@ def query_air_pollution_data():
 
     """
     try:
-        db = db_connection.DBConnection()
+        db = db_connection.DBConnection()  #pylint: disable=C0103
     except IOError:
         return "Database connection not possible", 504, {
             'ContentType': 'text/plain'
@@ -139,7 +126,7 @@ def insert_sensor_data():
 
     """
     try:
-        db = db_connection.DBConnection()
+        db = db_connection.DBConnection()  #pylint: disable=C0103
     except IOError:
         return "Database connection not possible", 504, {
             'ContentType': 'text/plain'
