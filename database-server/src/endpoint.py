@@ -12,29 +12,45 @@ def connectionStats():
     return db.getConnectionStats()
 
 
+    try:
+        db = db_connection.DBConnection()
+    except IOError:
+        return "Database connection not possible", 504, {'ContentType':'text/plain'}
+    return db.get_database_info(), 200, {'ContentType':'application/json'}
+    
+    try:
+        db = db_connection.DBConnection()
+    except IOError:
+        return "Database connection not possible", 504, {'ContentType':'text/plain'}
+    return db.get_connection_stats(), 200, {'ContentType':'application/json'}
+
 @app.route('/analytics', methods=['GET'])
-def query():
-    db = DBConnection()
-    return db.queryAirPollution()
+    try:
+        db = db_connection.DBConnection()
+    except IOError:
+        return "Database connection not possible", 504, {'ContentType':'text/plain'}
+    return db.query_air_pollution_data(), 200, {'ContentType':'application/json'}
 
 
-@app.route('/insertSensorData', methods=['GET', 'POST'])
-def insertSensorData():
 
-    db = DBConnection()
-    if (request.method == 'POST'):
-        sensorData = request.get_json().get(
-            "payload_fields").values()  #this contains the air pollution data
-        if (sensorData):
-            return db.insertAirPollutionData(sensorData)
+    try:
+        db = db_connection.DBConnection()
+    except IOError:
+        return "Database connection not possible", 504, {'ContentType':'text/plain'}
 
-    return "Hello"
+    sensor_data = request.get_json().get(
+        "payload_fields")  #this contains the air pollution data
+    if sensor_data: #i.e. we have the payload fields 
+        try:
+            db.insert_sensor_data(sensor_data.values())
+            return "Successful Insertion", 201, {'ContentType':'text/plain'}
 
+        except IOError:
+            return "Error: malformed payload fields data", 400, {'ContentType':'text/plain'}
 
-@app.route('/info', methods=['GET'])
-def test():
-    db = DBConnection()
-    return db.getDBInfo()
+    else:
+        return "Error no payload fields in JSON", 400, {'ContentType':'text/plain'}
+
 
 
 def runEndpoint():
