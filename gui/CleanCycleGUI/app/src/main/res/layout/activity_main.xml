@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:map="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/map"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintTop_toBottomOf="@id/autocomplete_fragment"
+        app:layout_constraintBottom_toTopOf="@id/navigation"
+        tools:context=".MapsActivity" />
+
+    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:map="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/settings"
+        android:name="uk.ac.cam.cl.cleancyclegui.SettingsFragment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/autocomplete_fragment"
+        tools:context=".MainActivity" />
+
+    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:map="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/notifications"
+        android:name="uk.ac.cam.cl.cleancyclegui.NotificationsFragment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/autocomplete_fragment"
+        tools:context=".MainActivity" />
+
+    <fragment android:id="@+id/autocomplete_fragment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@id/map"
+        android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"
+        />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@id/navigation"
+        android:id="@+id/distance_label"
+        />
+
+    <RadioGroup
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@+id/settings"
+        android:id="@+id/algorithm_group">
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/radio_pollution_only"
+            android:id="@+id/radio_pollution_only"
+            android:onClick="onAlgorithmButtonClicked"
+            />
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/radio_avoid_pollution"
+            android:id="@+id/radio_avoid_pollution"
+            android:onClick="onAlgorithmButtonClicked"
+            />
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/radio_distance_only"
+            android:id="@+id/radio_distance_only"
+            android:onClick="onAlgorithmButtonClicked"
+            />
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/radio_mixed_1"
+            android:id="@+id/radio_mixed_1"
+            android:onClick="onAlgorithmButtonClicked"
+            />
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/radio_mixed_2"
+            android:id="@+id/radio_mixed_2"
+            android:onClick="onAlgorithmButtonClicked"
+            />
+        <RadioButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/radio_mixed_3"
+            android:id="@+id/radio_mixed_3"
+            android:onClick="onAlgorithmButtonClicked"
+            />
+    </RadioGroup>
+
+    <Button
+        android:id="@+id/save_route_button"
+        android:onClick="onSaveButtonClicked"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toTopOf="@id/navigation"
+        app:layout_constraintRight_toRightOf="parent"
+        android:text="@string/save_route_button_text"
+        />
+
+
+    <android.support.v7.widget.RecyclerView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/notifications"
+        android:id="@+id/saved_routes_list"
+        />
+
+    <android.support.design.widget.BottomNavigationView
+        android:id="@+id/navigation"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="0dp"
+        android:layout_marginEnd="0dp"
+        android:background="?android:attr/windowBackground"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:menu="@menu/navigation" />
+</android.support.constraint.ConstraintLayout>
