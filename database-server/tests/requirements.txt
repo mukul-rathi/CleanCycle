@@ -6,3 +6,5 @@ psycopg2-binary==2.7.7
 SQLAlchemy==1.2.18
 pytest==4.3.0
 requests==2.21.0
+pylint==2.3.1
+

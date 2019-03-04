@@ -1,123 +1,221 @@
+"""
+This module contains all the database information.
+There is a Database class to define the schema of the database.
+The DBConnection class provides a clean interface to perform operations on the database.
+
+"""
+#standard imports
+import json
+import os
+import uuid
+import io
+import time
+import random
+
+#third party imports
 import psycopg2
 from psycopg2 import sql
 import sqlalchemy
 from sqlalchemy import create_engine
-import json
-import os
 import pandas as pd
-import uuid
-import io
-import time
-from random import randint
 
-columns = {
-    "position": [
-        "uuid", "AccX", "AccY", "AccZ", "Acc_mag", "Altitude", "GyroX",
-        "GyroY", "GyroZ", "Gyro_mag", "Latitude", "Longitude", "Speed"
-    ],
-    "weather": [
-        "uuid", "DewPt", "Humid", "MxWSpd", "Press", "Rain", "Sun", "Temp_CBS",
-        "Temp_CL", "WindDr", "WindSp"
-    ],
-    "time": ["uuid", "Date", "Counter", "Millis", "Start", "Time"],
-    "system_status":
-    ["uuid", "BatteryVIN", "Satellites", "gpsUpdated", "nAcc"],
-    "air_quality": ["uuid", "Latitude", "Longitude", "PM10", "PM2.5"]
-}
 
-schemas = {
-    "position":
-    "(uuid TEXT PRIMARY KEY, AccX FLOAT8, AccY FLOAT8 , AccZ FLOAT8, Acc_mag FLOAT8, Altitude FLOAT8, GyroX FLOAT8, GyroY FLOAT8, GyroZ FLOAT8, Gyro_mag FLOAT8, Latitude FLOAT8, Longitude FLOAT8, Speed FLOAT8)",
-    "weather":
-    "(uuid TEXT PRIMARY KEY, DewPt FLOAT8, Humid FLOAT8, MxWSpd FLOAT8, Press FLOAT8, Rain FLOAT8, Sun FLOAT8, Temp_CBS FLOAT8, Temp_CL FLOAT8, WindDr FLOAT8, WindSp FLOAT8)",
-    "time":
-    "(uuid TEXT PRIMARY KEY, Date FLOAT8, Counter FLOAT8,Millis FLOAT8, Start TEXT, Time FLOAT8)",
-    "system_status":
-    " (uuid TEXT PRIMARY KEY, BatteryVIN FLOAT8, Satellites FLOAT8, gpsUpdated FLOAT8, nAcc FLOAT8)",
-    "air_quality":
-    "(uuid TEXT PRIMARY KEY, Latitude FLOAT8,  Longitude FLOAT8, PM10 FLOAT8, PM25 FLOAT8)"
-}
+class Database:
+    """
+    This class is responsible for defining the PostgreSQL database schema.
+    
+    Attributes:
+        columns: dictionary mapping table names to column names
+        schemas: dictionary mapping table names to schema
+    """
+    columns = {
+        "position": [
+            "uuid", "AccX", "AccY", "AccZ", "Acc_mag", "Altitude", "GyroX",
+            "GyroY", "GyroZ", "Gyro_mag", "Latitude", "Longitude", "Speed"
+        ],
+        "weather": [
+            "uuid", "DewPt", "Humid", "MxWSpd", "Press", "Rain", "Sun",
+            "Temp_CBS", "Temp_CL", "WindDr", "WindSp"
+        ],
+        "time": ["uuid", "Date", "Counter", "Millis", "Start", "Time"],
+        "system_status":
+        ["uuid", "BatteryVIN", "Satellites", "gpsUpdated", "nAcc"],
+        "air_quality": ["uuid", "Latitude", "Longitude", "PM10", "PM2.5"]
+    }
+
+    schemas = {
+        "position":
+        "(uuid TEXT PRIMARY KEY, AccX FLOAT8, AccY FLOAT8 , AccZ FLOAT8, Acc_mag FLOAT8, Altitude FLOAT8, GyroX FLOAT8, GyroY FLOAT8, GyroZ FLOAT8, Gyro_mag FLOAT8, Latitude FLOAT8, Longitude FLOAT8, Speed FLOAT8)",
+        "weather":
+        "(uuid TEXT PRIMARY KEY, DewPt FLOAT8, Humid FLOAT8, MxWSpd FLOAT8, Press FLOAT8, Rain FLOAT8, Sun FLOAT8, Temp_CBS FLOAT8, Temp_CL FLOAT8, WindDr FLOAT8, WindSp FLOAT8)",
+        "time":
+        "(uuid TEXT PRIMARY KEY, Date FLOAT8, Counter FLOAT8,Millis FLOAT8, Start TEXT, Time FLOAT8)",
+        "system_status":
+        " (uuid TEXT PRIMARY KEY, BatteryVIN FLOAT8, Satellites FLOAT8, gpsUpdated FLOAT8, nAcc FLOAT8)",
+        "air_quality":
+        "(uuid TEXT PRIMARY KEY, Latitude FLOAT8,  Longitude FLOAT8, PM10 FLOAT8, PM2_5 FLOAT8)"
+    }
 
 
 class DBConnection:
+    """
+    This class is responsible for initiating the connection with the PostgreSQL database.
+    It provides a clean interface to perform operations on the database.
+    
+    Attributes:
+        _engine: API object used to interact with database.
+        _conn: handles connection (encapsulates DB session)
+        _cur:  cursor object to execute PostgreSQl commands
+    """
+
     def __init__(self,
-                 dbname=os.environ['POSTGRES_DB'],
-                 dbuser=os.environ['POSTGRES_USER'],
-                 dbpassword=os.environ['POSTGRES_PASSWORD'],
-                 hostname="database",
+                 db_name=os.environ['POSTGRES_DB'],
+                 db_user=os.environ['POSTGRES_USER'],
+                 db_password=os.environ['POSTGRES_PASSWORD'],
+                 host_name="database",
                  port=5432):
-        #set up connection
-        engineParams = f"postgresql+psycopg2://{dbuser}:{dbpassword}@{hostname}:{port}/{dbname}"
-        exponentialBackoff = 1  #the number of seconds to wait between retrying connection
+        """
+        Initiates a connection with the PostgreSQL database as the given user on the given port.
+
+        This tries to connect to the database, if not it will retry with increasing waits in between.
+      
+
+        Args:
+            db_name: the name of the database
+            db_user: the name of the user connecting to the          database.
+            db_password: the password of said user.
+            host_name: the host address of the database.
+                Here, since database container is on same docker network,
+                Docker resolves "database" to the address.
+            port: the port on which the database is hosted 
+            For the Postgres docker container, the default port is 5432.
+        Returns: None (since __init__)
+        Raises:
+            IOError: An error occurred accessing the database.
+            Raised if after the max number of tries the connection still hasn't been established.
+        """
+        engine_params = f"postgresql+psycopg2://{db_user}:{db_password}@{host_name}:{port}/{db_name}"
+        num_tries = 1
+        max_num_tries = 20  #this can be tweaked accordingly
+
         while True:
             try:
-                self._engine = create_engine(engineParams)
+                self._engine = create_engine(engine_params)
                 self._conn = self._engine.raw_connection()
                 self._cur = self._conn.cursor()
                 break
             except (sqlalchemy.exc.OperationalError,
                     psycopg2.OperationalError):
-                time.sleep(randint(0, exponentialBackoff))
-                exponentialBackoff *= 2
+                # Use binary exponential backoff
+                #- i.e. sample a wait between [0..2^n]
+                #when n = number of tries.
+                time.sleep(random.randint(0, 2**num_tries))
+                if num_tries > max_num_tries:
+                    raise IOError("Database unavailable")
+                num_tries += 1
 
-    def createSensorTables(self):
-        self._cur.execute(
-            "CREATE TABLE IF NOT EXISTS position (uuid TEXT PRIMARY KEY, AccX FLOAT8, AccY FLOAT8 , AccZ FLOAT8, Acc_mag FLOAT8, Altitude FLOAT8, GyroX FLOAT8, GyroY FLOAT8, GyroZ FLOAT8, Gyro_mag FLOAT8, Latitude FLOAT8, Longitude FLOAT8, Speed FLOAT8)"
-        )
+    def create_tables(self):
+        """
+        Creates the database tables based on schema definition in Database class.
 
-        self._cur.execute(
-            "CREATE TABLE IF NOT EXISTS weather(uuid TEXT PRIMARY KEY, DewPt FLOAT8, Humid FLOAT8, MxWSpd FLOAT8, Press FLOAT8, Rain FLOAT8, Sun FLOAT8, Temp_CBS FLOAT8, Temp_CL FLOAT8, WindDr FLOAT8, WindSp FLOAT8)"
-        )
-
+        Args: None
+           
+        Returns: None (since commits execution result to database)
+        """
         for table, schema in Database.schemas.items():
-        self._cur.execute(
+            self._cur.execute(
                 sql.SQL("CREATE TABLE IF NOT EXISTS {} {}").format(
                     sql.Identifier(table), sql.SQL(schema)))
         self._conn.commit()
 
-        self._cur.execute(
-            "CREATE TABLE IF NOT EXISTS system_status(uuid TEXT PRIMARY KEY, BatteryVIN FLOAT8, Satellites FLOAT8, gpsUpdated FLOAT8, nAcc FLOAT8)"
-        )
+    def insert_backup_data(self, csv_file):
+        """
+        Inserts the database backup CSV data. 
+        If a unique uid for each measurement is not present, it generates one and stores it in the CSV file.
 
-        self._cur.execute(
-            "CREATE TABLE IF NOT EXISTS air_quality (uuid TEXT PRIMARY KEY, Latitude FLOAT8,  Longitude FLOAT8, PM10 FLOAT8, PM25 FLOAT8)"
-        )
+        The rows in the CSV are then inserted as records in the respective tables.
 
-        self._conn.commit()
-
-    def insertSensorData(self, csvFile):
-        data = pd.read_csv(csvFile)
-        #generate unique uid for each measurement if not there
-        if ("uuid" not in data.columns):
+        Args: 
+            csv_file: the path of the CSV file
+           
+        Returns: None (since commits data to database)
+        """
+        data = pd.read_csv(csv_file)
+        if "uuid" not in data.columns:
             data["uuid"] = [uuid.uuid4().hex for _ in range(data.shape[0])]
-            data.to_csv(csvFile)
-        for table in columns.keys():
-            table_df = data[columns[table]]
+            data.to_csv(csv_file)
+
+    #CSV for each table converted to a string and copied across to the database.
+    #Alternative could be to do Batch Insert
+        for table in Database.columns:
+            table_df = data[Database.columns[table]]
             output = io.StringIO()
             table_df.to_csv(output, sep='\t', header=False, index=False)
             output.seek(0)
             self._cur.copy_from(output, table, null="")
         self._conn.commit()
 
-    def insertAirPollutionData(self, data):
-        if (len(data) % 4 != 0):  #should be lat, long, PM10, PM2.5
-            return "Bad packets"
+    def insert_sensor_data(self, data):
+        """
+        Inserts the air pollution sensor data into database
+
+        Args: 
+            data: a list of data values from the hardware. 
+            This is logically grouped into groups of 4 values. 
+            Each group is a measurement of (lat, long, PM10, PM2.5).
+           
+        Returns: None (since commits data to database)
+
+        Raises:
+            IOError: if data malformed (i.e. not a multiple of 4, so missing values)
+        """
+        if len(data) % 4 != 0:
+            raise IOError("Malformed packet data")
+
         for i in range(0, len(data), 4):
             self._cur.execute(
-                "INSERT INTO air_quality (uuid, Latitude, Longitude, PM10, PM25) VALUES (%s, %s, %s, %s, %s)",
+                "INSERT INTO air_quality (uuid, Latitude, Longitude, PM10, PM2_5) VALUES (%s, %s, %s, %s, %s)",
                 (uuid.uuid4().hex, *list(data)[i:i + 4]))
         self._conn.commit()
-        return "Successful insert"
 
-    def queryAirPollution(self):
+    def query_air_pollution_data(self):
+        """
+        Returns the air pollution sensor data from the database.
+        This is used for analytics.
+
+        Args: None
+           
+        Returns: List of (lists of 4 values) - this corresponds to records of (Lat, Long, PM10, PM2.5).
+        """
         self._cur.execute(
-            "SELECT Latitude, Longitude, PM10, PM25 FROM air_quality;")
+            "SELECT Latitude, Longitude, PM10, PM2_5 FROM air_quality;")
         return json.dumps(self._cur.fetchall())
 
-    def getConnectionStats(self):
+    def get_connection_stats(self):
+        """
+       Returns the statistics for the database connection (useful for debugging). 
+
+        Args: None
+           
+        Returns: A JSON string consisting of connection statistics. 
+        e.g. 
+        {"user": "tester", "dbname": "testdatabase",
+         "host": "database", "port": "5432", 
+         "tty": "", "options": "", "sslmode": "prefer", 
+         "sslcompression": "0", "krbsrvname": "postgres",
+         "target_session_attrs": "any"}
+         """
         return json.dumps(self._conn.get_dsn_parameters())
 
-    def getDBInfo(self):  #print out all tables and their records
+    def get_database_info(self):
+        """
+        Returns the data stored in the database, indexed by table.
+
+        Args: None
+           
+        Returns: A JSON string where keys are table names and values are lists of lists.
+        This corresponds to the list of records in that table.
+        """
         tables = {}
         self._cur.execute(
             """SELECT table_name FROM information_schema.tables
@@ -131,7 +229,16 @@ class DBConnection:
             tables[table[0]] = cur2.fetchall()
         return json.dumps(tables)
 
-    def clearData(self):
+    def clear_data(self):
+        """
+        Clears the data stored in the database.
+
+        This is useful for bootstrap and unit tests that want to start with a fresh state.
+
+        Args: None
+           
+        Returns: None
+        """
         self._cur.execute(
             """SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"""
         )  # this gets an iterable collection of the public tables in the database

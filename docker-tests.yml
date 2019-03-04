@@ -21,7 +21,7 @@ services:
       - endpoint
     volumes:
       - ./database-server/tests:/usr/src/app
-      - ./database-server/src:/usr/src/app/src_code
+      - ./database-server/src:/usr/src/app/src
     env_file: ./database-server/test.env
   analytics:
     build: ./
