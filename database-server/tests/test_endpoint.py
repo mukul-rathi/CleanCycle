@@ -34,7 +34,22 @@ class TestEndpoint(object):
 
     def test_insert_sensor_data(self):
         with open("test-sensor-data.json", "r") as f:
-            sensorData = json.load(f)
+    def test_insert_no_sensor_data(self):
+        """
+        Checks if the endpoint handles a JSON with no payload fields correctly and returns code 400 without crashing.
+        """
+        sensor_data = {}
         r = requests.post(
-            url=(self.endpoint + "/insertSensorData"), json=sensorData)
-        assert r.ok
+            url=(self.endpoint + "/insertSensorData"), json=sensor_data)
+        assert r.status_code == 400
+    def test_insert_bad_sensor_data(self):
+        """
+        Checks if the endpoint handles JSON with badly formatted payload fields correctly and returns code 400 without crashing.
+        """
+        sensor_data = {"payload_fields":{
+            "0": 1.0,
+            "1": 1.1
+            }} #note not a multiple of 4
+        r = requests.post(
+            url=(self.endpoint + "/insertSensorData"), json=sensor_data)
+        assert r.status_code == 400
