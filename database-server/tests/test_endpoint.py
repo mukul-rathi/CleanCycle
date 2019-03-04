@@ -120,3 +120,16 @@ class TestEndpoint():
             json=sensor_data)
 
         assert r.status_code == 400
+
+    def test_insert_and_query_analytics_and_database(self):
+        """
+        Checks if after insertion the analytics and database info are in a consistent state.
+        """
+        with open("test-sensor-data.json", "r") as f:  #pylint: disable=C0103
+            sensor_data = json.load(f)
+
+        requests.post(  #pylint: disable=C0103
+            url=(self.endpoint + "/insertSensorData"),
+            json=sensor_data)
+        self.test_analytics_endpoint()
+        self.test_database_info_endpoint()

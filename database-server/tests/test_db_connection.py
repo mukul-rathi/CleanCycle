@@ -5,10 +5,12 @@ This module runs all the tests for the DBConnection Class
 
 #standard imports
 import json
+import os
 
 #third party imports
 import pandas as pd
 import numpy as np
+import pytest
 
 #local application imports
 import app.src.db_connection as db_connection
@@ -131,3 +133,36 @@ class TestDBConnection():
                 TestDBConnection.check_row_equality(data_point, record)
                 for record in db_records
             ])  #check if any record matches data-point
+
+    def test_insert_backup_data_without_uuid(self):
+        """
+        This method tests if the insert back-up data does correctly add a uuid and then  insert the data in the CSV file.
+
+        """
+        self._db.insert_backup_data("test.csv")
+        df = pd.read_csv("test.csv")  #pylint: disable=C0103
+        df = df.drop(columns=["uuid"])  #pylint: disable=C0103
+        df.to_csv("test.csv")
+
+        self.test_insert_backup_data()
+
+    def test_connection_stats(self):
+        """
+        Checks if connected to correct database, as correct user on the correct port. 
+        """
+        connection_info = json.loads(self._db.get_connection_stats())
+
+        #check connection consistent with environment variables
+        assert connection_info["user"] == os.environ.get("POSTGRES_USER")
+        assert connection_info["dbname"] == os.environ.get("POSTGRES_DB")
+        assert connection_info["port"] == "5432"  #this is database port
+
+    def test_insert_malformed_sensor_data(self):
+        """
+        This method tests if, given malformed sensor data 
+        (where list of data fields is not groupable into groups of 4), 
+        an IOError is raised. 
+
+        """
+        sensor_data = [1.1, 1.2]
+        pytest.raises(IOError, self._db.insert_sensor_data, sensor_data)
