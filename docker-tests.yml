@@ -1,0 +1,35 @@
+version: '3'
+
+services: 
+  endpoint:
+    build: ./database-server/src
+    env_file: ./database-server/test.env
+    volumes:
+      - ./database-server/src:/usr/src/app/
+    ports:
+        - 5000:80
+    depends_on:
+       -  database
+  database:
+    image: postgres
+    restart: always
+    env_file: ./database-server/test.env 
+  test:
+    build: ./database-server/tests
+    depends_on:
+      - database
+      - endpoint
+    volumes:
+      - ./database-server/tests:/usr/src/app
+      - ./database-server/src:/usr/src/app/src_code
+    env_file: ./database-server/test.env
+  analytics:
+    build: ./
+    depends_on:
+      - database
+      - endpoint
+    volumes:
+      - ./src/main/java/CleanCycle/Analytics:/home/gradle/project/src/main/java/CleanCycle/Analytics
+      - ./src/test/java/CleanCycle/Analytics:/home/gradle/project/src/test/java/CleanCycle/Analytics
+    environment:
+      - TEST_ENV=True #so will run tests
