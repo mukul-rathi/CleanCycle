@@ -3,6 +3,11 @@ package CleanCycle.Analytics;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+/**
+ * This class writes a small, spoof JSON file in the OSM style so we don't have to
+ * read in 4.4MB every time we do a small unit test. The graph has two separate components
+ * so that testing for component elimination will work as intended.
+ */
 public class SpoofJSON {
     public static void writeJSONMap() {
         try {

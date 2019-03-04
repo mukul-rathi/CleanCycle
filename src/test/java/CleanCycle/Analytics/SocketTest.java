@@ -23,9 +23,16 @@ import static CleanCycle.Analytics.SpoofJSON.writeJSONMap;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+/**
+ * This class contains unit tests pertaining to socket transmission of the analyzed data.
+ */
 public class SocketTest {
-    @Test
-    public void testEdgeSocketTransmission() {
+    /**
+     * Test to make sure edges and nodes are transmitted correctly by the socket. First we initialize the program
+     * as in a normal execution, pull from the database and eliminate spare components,
+     * then create a new thread to send the nodes/edges and receive them in the main thread.
+     */
+    @Test public void testEdgeSocketTransmission() {
         final Map<Long, Node> nodes = new HashMap<>();
         final Map<Long, Edge> edges = new HashMap<>();
         final List<Point> points = new ArrayList<>();
@@ -61,6 +68,7 @@ public class SocketTest {
 
         pointToEdge(points, edges, nodes);
 
+        /* Thread here sends our processed nodes/edges to the main thread's receiving socket. */
         Thread sendEdgesThread = new Thread() {
             @Override
             public void run() {
@@ -86,6 +94,7 @@ public class SocketTest {
         sendEdgesThread.setDaemon(true);
         sendEdgesThread.start();
 
+        /* Sleep for a second to give the other thread time to start, then receive the objects. */
         try {
             Thread.sleep(1000);
             Socket s = new Socket(InetAddress.getLocalHost(), 54333);
@@ -103,6 +112,9 @@ public class SocketTest {
         }
     }
 
+    /**
+     * Test for sending data points via socket, almost identical to the above.
+     */
     @Test public void testPointSocketTransmission() {
         final Map<Long, Node> nodes = new HashMap<>();
         final Map<Long, Edge> edges = new HashMap<>();

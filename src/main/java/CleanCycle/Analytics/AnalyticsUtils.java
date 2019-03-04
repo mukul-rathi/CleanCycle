@@ -1,21 +1,17 @@
 package CleanCycle.Analytics;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.text.DecimalFormat;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Class of helper functions for the analytics code.
+ */
 public class AnalyticsUtils {
+    /**
+     * A custom comparator for use in comparing the sizes of connected components.
+     */
     static class SizeComparator implements Comparator<Set<?>> {
         @Override
         public int compare(Set<?> o1, Set<?> o2) {
@@ -76,7 +72,9 @@ public class AnalyticsUtils {
         double area = Math.sqrt(s * (s - AB) * (s - BC) * (s - AC));
 
         /*
-         * area == (BC * AD) / 2 BC * AD == 2 * area AD == (2 * area) / BC
+         * area == (BC * AD) / 2, so
+         * BC * AD == 2 * area, so
+         * AD == (2 * area) / BC
          */
         double AD = (2 * area) / BC;
         return AD;
