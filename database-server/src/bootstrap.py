@@ -6,9 +6,13 @@ This module contains the code to run the bootstrap procedure for the endpoint an
 #standard imports
 import glob
 
-#local application imports - note can't use full package name as it varies between containers
-import db_connection  # pylint: disable=E0401
-import endpoint  # pylint: disable=E0401
+#local application imports -
+try:
+    import db_connection
+    import endpoint
+except ModuleNotFoundError:
+    import app.src.db_connection as db_connection
+    import app.src.endpoint as endpoint
 
 #note that Pylint disable C0103 refes to disabling the "doesn't conform to snake_case" messages.
 
