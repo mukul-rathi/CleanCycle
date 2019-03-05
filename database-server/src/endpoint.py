@@ -10,8 +10,10 @@ from flask_cors import CORS
 
 #local application imports - note can't use full package name as it varies between containers
 
-import db_connection  # pylint: disable=E0401
-
+try:
+    import db_connection
+except ModuleNotFoundError:
+    import app.src.db_connection as db_connection
 #note that Pylint disable C0103 refes to disabling the "doesn't conform to snake_case" messages.
 
 app = Flask(__name__)  #pylint: disable=C0103
@@ -132,9 +134,10 @@ def insert_sensor_data():
             'ContentType': 'text/plain'
         }
 
-    sensor_data = request.get_json().get(
-        "payload_fields")  #this contains the air pollution data
-    if sensor_data:  #i.e. we have the payload fields
+    #this contains the air pollution data
+    if "payload_fields" in request.get_json(
+    ):  #i.e. we have the payload fields
+        sensor_data = request.get_json().get("payload_fields")
         try:
             db.insert_sensor_data(sensor_data.values())
             return "Successful Insertion", 201, {'ContentType': 'text/plain'}

@@ -92,7 +92,7 @@ class TestEndpoint():
 
         assert r.status_code == 201
 
-    def test_insert_no_sensor_data(self):
+    def test_insert_sensor_data_missing_payload(self):
         """
         Checks if the endpoint handles a JSON with no payload fields correctly and returns code 400 without crashing.
         """
@@ -120,6 +120,18 @@ class TestEndpoint():
             json=sensor_data)
 
         assert r.status_code == 400
+
+    def test_insert_no_sensor_data(self):
+        """
+        Checks if the endpoint correctly handles a JSON with payload fields that are empty  and returns code 200 without crashing.
+        """
+        sensor_data = {"payload_fields": {}}
+
+        r = requests.post(  #pylint: disable=C0103
+            url=(self.endpoint + "/insertSensorData"),
+            json=sensor_data)
+
+        assert r.status_code == 201
 
     def test_insert_and_query_analytics_and_database(self):
         """
