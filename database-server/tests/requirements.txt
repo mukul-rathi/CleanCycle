@@ -7,4 +7,6 @@ SQLAlchemy==1.2.18
 pytest==4.3.0
 requests==2.21.0
 pylint==2.3.1
-
+yapf==0.26.0
+coverage==4.5.2
+pytest-cov==2.6.1

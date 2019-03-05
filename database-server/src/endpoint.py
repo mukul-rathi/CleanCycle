@@ -8,10 +8,15 @@ The endpoint provides a clean REST API for other sections of the project to quer
 from flask import Flask, request
 from flask_cors import CORS
 
-#local application imports
-import db_connection
+#local application imports - note can't use full package name as it varies between containers
 
-app = Flask(__name__)
+try:
+    import db_connection
+except ModuleNotFoundError:
+    import app.src.db_connection as db_connection
+#note that Pylint disable C0103 refes to disabling the "doesn't conform to snake_case" messages.
+
+app = Flask(__name__)  #pylint: disable=C0103
 CORS(app)
 
 
@@ -29,7 +34,7 @@ def database_info():
 
     """
     try:
-        db = db_connection.DBConnection()
+        db = db_connection.DBConnection()  #pylint: disable=C0103
     except IOError:
         return "Database connection not possible", 504, {
             'ContentType': 'text/plain'
@@ -51,23 +56,7 @@ def connection_stats():
 
     """
     try:
-        db = db_connection.DBConnection()
-    except IOError:
-        return "Database connection not possible", 504, {
-            'ContentType': 'text/plain'
-        }
-    return db.get_connection_stats(), 200, {'ContentType': 'application/json'}
-
-    try:
-        db = db_connection.DBConnection()
-    except IOError:
-        return "Database connection not possible", 504, {
-            'ContentType': 'text/plain'
-        }
-    return db.get_database_info(), 200, {'ContentType': 'application/json'}
-
-    try:
-        db = db_connection.DBConnection()
+        db = db_connection.DBConnection()  #pylint: disable=C0103
     except IOError:
         return "Database connection not possible", 504, {
             'ContentType': 'text/plain'
@@ -89,7 +78,7 @@ def query_air_pollution_data():
 
     """
     try:
-        db = db_connection.DBConnection()
+        db = db_connection.DBConnection()  #pylint: disable=C0103
     except IOError:
         return "Database connection not possible", 504, {
             'ContentType': 'text/plain'
@@ -139,15 +128,16 @@ def insert_sensor_data():
 
     """
     try:
-        db = db_connection.DBConnection()
+        db = db_connection.DBConnection()  #pylint: disable=C0103
     except IOError:
         return "Database connection not possible", 504, {
             'ContentType': 'text/plain'
         }
 
-    sensor_data = request.get_json().get(
-        "payload_fields")  #this contains the air pollution data
-    if sensor_data:  #i.e. we have the payload fields
+    #this contains the air pollution data
+    if "payload_fields" in request.get_json(
+    ):  #i.e. we have the payload fields
+        sensor_data = request.get_json().get("payload_fields")
         try:
             db.insert_sensor_data(sensor_data.values())
             return "Successful Insertion", 201, {'ContentType': 'text/plain'}

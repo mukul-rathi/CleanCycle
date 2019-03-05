@@ -6,9 +6,15 @@ This module contains the code to run the bootstrap procedure for the endpoint an
 #standard imports
 import glob
 
-#local application imports
-import db_connection
-import endpoint
+#local application imports -
+try:
+    import db_connection
+    import endpoint
+except ModuleNotFoundError:
+    import app.src.db_connection as db_connection
+    import app.src.endpoint as endpoint
+
+#note that Pylint disable C0103 refes to disabling the "doesn't conform to snake_case" messages.
 
 
 def bootstrap():
@@ -22,7 +28,7 @@ def bootstrap():
         Returns: None
     """
     print("Beginning bootstrap procedure...")  #for debugging
-    db = db_connection.DBConnection()
+    db = db_connection.DBConnection()  #pylint: disable=C0103
     print("Established connection to db...")  #for debugging
 
     db.create_tables()
