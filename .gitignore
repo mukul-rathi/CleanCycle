@@ -1,33 +1,10 @@
 *.env 
 __pycache__/
-database-server/data/
+data/
 .DS_Store
 *.csv
 *.csv
 *.json
-.idea/
-*.iml
-out/
-*.obj
-# Ignore Gradle project-specific cache directory
-.gradle
-
-# Ignore Gradle build output directory
-build/
-
-# Ignore Gradle GUI config
-gradle-app.setting
-# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
-!gradle-wrapper.jar
-
-# Cache of project
-.gradletasknamecache
-
-# # Work around https://youtrack.jetbrains.com/issue/IDEA-116898
-# gradle/wrapper/gradle-wrapper.properties
-
-### Gradle Patch ###
-**/build/
 
 
 #Ignore pytest output
@@ -37,23 +14,12 @@ gradle-app.setting
 .coverage
 htmlcov/
 #Allow test csv and json files to be used for testing
-!database-server/tests/test.csv
-!test-map.json
-!database-server/tests/test-sensor-data.json
+!tests/test.csv
+!tests/test-sensor-data.json
 
 #Ignore VS Code config
 .classpath
 .project
 .settings/
-bin/#Ignore VS Code config
-.classpath
-.project
-.settings/
-bin/#Ignore VS Code config
-.classpath
-.project
-.settings/
 bin/
-
-#Ignore arduino build files
-communication/build
+build/

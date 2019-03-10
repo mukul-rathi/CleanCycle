@@ -6,13 +6,13 @@ This module contains the code to run the bootstrap procedure for the endpoint an
 #standard imports
 import glob
 
-#local application imports -
+#local application imports -``
 try:
     import db_connection
     import endpoint
 except ModuleNotFoundError:
-    import app.src.db_connection as db_connection
-    import app.src.endpoint as endpoint
+    from app.src import db_connection
+    from app.src import endpoint
 
 #note that Pylint disable C0103 refes to disabling the "doesn't conform to snake_case" messages.
 

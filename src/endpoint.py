@@ -13,7 +13,7 @@ from flask_cors import CORS
 try:
     import db_connection
 except ModuleNotFoundError:
-    import app.src.db_connection as db_connection
+    from app.src import db_connection
 #note that Pylint disable C0103 refes to disabling the "doesn't conform to snake_case" messages.
 
 app = Flask(__name__)  #pylint: disable=C0103

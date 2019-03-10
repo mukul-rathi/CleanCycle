@@ -2,10 +2,10 @@ version: '3'
 
 services: 
   endpoint:
-    build: ./database-server/src
-    env_file: ./database-server/database.env
+    build: ./src
+    env_file: ./database.env
     volumes:
-      - ./database-server/src:/usr/src/app
+      - ./src:/usr/src/app
     ports:
         - 5000:80
     depends_on:
@@ -13,6 +13,4 @@ services:
   database:
     image: postgres
     restart: always
-    env_file: ./database-server/database.env
-    volumes:
-      - ./database-server/data:/var/lib/postgresql/data
+    env_file: ./database.env

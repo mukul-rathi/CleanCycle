@@ -1,34 +1,30 @@
-# CleanCycle
+# CleanCycle -  Database Server
 
-[![Build Status](https://travis-ci.com/mukul-rathi/CleanCycle.svg?branch=master)](https://travis-ci.com/mukul-rathi/CleanCycle)
+[![Build Status](https://travis-ci.com/mukul-rathi/CleanCycle.svg?branch=tutorial)](https://travis-ci.com/mukul-rathi/CleanCycle)
 
-1B Group Project (Group Charlie)
-
-## Database Server
+This is a database server used for storing sensor data collected by the Cambike team. It is used as an example in the blog post tutorials on setting up a database server with Docker, PostgreSQL and Flask. 
 
 ### Technologies used
 
 The Cambike sensor measurements are stored in a PostgreSQL database, whilst the REST endpoint is written using Flask. These are each wrapped in their own Docker containers - to run them, run `docker-compose build` and `docker-compose up`. 
 
-The bootstrap procedure initialises the database with the measurements in any CSV files in the `database-server/src/backups` repository (these have not been committed to the repo). 
+The bootstrap procedure initialises the database with the measurements in any CSV files in the `src/backups` repository (these have not been committed to the repo). 
 
-The database schema can be found in the `database-server/src/db_connection.py` file, along with an interface for the common database operations. 
+The database schema can be found in the `src/db_connection.py` file, along with an interface for the common database operations. 
 
 ### Testing
 
-The unit tests are in the `database-server/src/tests` directory - for each commit pushed to the repo, the Travis CI automatically builds an image from the testing Dockerfile and deploys the container (details of which are in the `docker-tests.yml` file). 
+The unit tests are in the `src/tests` directory - for each commit pushed to the repo, the Travis CI automatically builds an image from the testing Dockerfile and deploys the container (details of which are in the `docker-tests.yml` file). 
 
 Inside the `test` container, Docker runs `pytest` for the database and endpoint unit tests. These tests also have `Coverage.py` so the overall test coverage for each of the python files can be seen.
 
-The `analytics` container runs `gradle build` (using JUnit) for the analytics unit tests and for the integration tests.
+To run the tests locally, run `docker-compose -f docker-tests.yml build` followed by `docker-compose -f docker-tests.yml run test` to run the database unit tests = You will need to supply the `POSTGRES_DB`, `POSTGRES_USER` and `POSTGRES_PASSWORD` environment variables in `test.env` in the project directory.
 
-To run the tests locally, run `docker-compose -f docker-tests.yml build` followed by `docker-compose -f docker-tests.yml run test` to run the database unit tests and `docker-compose -f docker-tests.yml run analytics` to run the analytics tests. You will need to supply the `POSTGRES_DB`, `POSTGRES_USER` and `POSTGRES_PASSWORD` environment variables in `test.env` in the `database-server/` directory.
-
-You can visualise the test coverage by clicking `database-server/tests/htmlcov/index.html`.
+You can visualise the test coverage by clicking `tests/htmlcov/index.html`.
 
 ### Production - hosting on AWS
 
-Use an EC2 instance, SSH into and copy across files and install Docker and Docker-Compose on the instance. You'll need to supply a `database.env` file in the `database-server` directory, containing the  `POSTGRES_DB`, `POSTGRES_USER` and `POSTGRES_PASSWORD` environment variables. You'll also need to ensure any database backup CSV files are copied across in `database-server/src/backups`. 
+Use an EC2 instance, SSH into and copy across files and install Docker and Docker-Compose on the instance. You'll need to supply a `database.env` file in the root directory, containing the  `POSTGRES_DB`, `POSTGRES_USER` and `POSTGRES_PASSWORD` environment variables. You'll also need to ensure any database backup CSV files are copied across in `src/backups`. 
 
 Then run `docker-compose build` and `docker-compose up` to run the production server. (Endpoint is on port 5000 although this can be changed by altering the forwarded port in the `docker-compose.yml` file.)
 

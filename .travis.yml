@@ -4,9 +4,9 @@ python: 3.6
 services:
 - docker
 script:
-- cp database-server/tests/test.csv database-server/src/backups
+- cp tests/test.csv src/backups
 - docker-compose -f docker-tests.yml build
 - docker-compose -f docker-tests.yml run test
 before_install:
 - openssl aes-256-cbc -K $encrypted_8a0a8349c0e8_key -iv $encrypted_8a0a8349c0e8_iv
-  -in test.env.enc -out database-server/test.env -d
+  -in test.env.enc -out test.env -d

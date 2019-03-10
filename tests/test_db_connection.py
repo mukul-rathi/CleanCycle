@@ -13,7 +13,7 @@ import numpy as np
 import pytest
 
 #local application imports
-import app.src.db_connection as db_connection
+from app.src import db_connection
 
 #note that Pylint disable C0103 refes to disabling the "doesn't conform to snake_case" messages.
 
