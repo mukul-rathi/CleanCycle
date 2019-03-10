@@ -16,15 +16,3 @@ services:
     env_file: ./database-server/database.env
     volumes:
       - ./database-server/data:/var/lib/postgresql/data
-  analytics:
-    build: ./
-    restart: always
-    depends_on:
-      - database
-      - endpoint
-    volumes:
-      - ./src/main/java/CleanCycle/Analytics:/home/gradle/project/src/main/java/CleanCycle/Analytics
-      - ./src/test/java/CleanCycle/Analytics:/home/gradle/project/src/test/java/CleanCycle/Analytics
-    ports:
-      - 54334:54334 #points (heatmap)
-      - 54333:54333 #edges and nodes (route planning)

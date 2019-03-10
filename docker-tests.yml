@@ -23,13 +23,3 @@ services:
       - ./database-server/tests:/usr/src/app
       - ./database-server/src:/usr/src/app/src
     env_file: ./database-server/test.env
-  analytics:
-    build: ./
-    depends_on:
-      - database
-      - endpoint
-    volumes:
-      - ./src/main/java/CleanCycle/Analytics:/home/gradle/project/src/main/java/CleanCycle/Analytics
-      - ./src/test/java/CleanCycle/Analytics:/home/gradle/project/src/test/java/CleanCycle/Analytics
-    environment:
-      - TEST_ENV=True #so will run tests

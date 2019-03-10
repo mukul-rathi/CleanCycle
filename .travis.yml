@@ -1,16 +1,12 @@
 sudo: required
-language: java
-install: true
-jdk: oraclejdk8
+language: python
+python: 3.6
 services:
 - docker
 script:
 - cp database-server/tests/test.csv database-server/src/backups
-- docker-compose -f docker-tests.yml build && docker-compose -f docker-tests.yml run analytics
-- docker-compose -f docker-tests.yml down -v
+- docker-compose -f docker-tests.yml build
 - docker-compose -f docker-tests.yml run test
-notifications:
-  slack: cleancycle:5lF8hEqYZvrw9XflPC3eG2GD
 before_install:
 - openssl aes-256-cbc -K $encrypted_8a0a8349c0e8_key -iv $encrypted_8a0a8349c0e8_iv
   -in test.env.enc -out database-server/test.env -d

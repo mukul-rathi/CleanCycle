@@ -41,10 +41,3 @@ YAPF is used in a [pre-commit hook](https://github.com/google/yapf/blob/master/p
 
 To enforce high code quality, Travis CI will run `pylint` as well as `yapf --diff` - these will pass if the code is rated as 10.00/10 for `pylint` and if the code in the commit has been `yapf` formatted. 
 
-## arduino:
-
-This folder contains the code that is run on the arduino
-
-## communication
-
-This folder contains functions that can be used to encode and decode the messages for sending via LoRaWAN

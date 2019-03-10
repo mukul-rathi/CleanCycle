@@ -1,5 +1,0 @@
-<resources>
-    <string name="socket_url">0.tcp.ngrok.io</string>
-    <integer name="socket_port_graph">11730</integer>
-    <integer name="socket_port_heatmap">11731</integer>
-</resources>
