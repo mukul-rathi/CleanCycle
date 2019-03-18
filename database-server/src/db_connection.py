@@ -1,7 +1,8 @@
 """
 This module contains all the database information.
 There is a Database class to define the schema of the database.
-The DBConnection class provides a clean interface to perform operations on the database.
+The DBConnection class provides a clean interface to perform operations
+on the database.
 
 """
 #standard imports
@@ -45,15 +46,23 @@ class Database:
 
     _schemas = {
         "position":
-        "(uuid TEXT PRIMARY KEY, AccX FLOAT8, AccY FLOAT8 , AccZ FLOAT8, Acc_mag FLOAT8, Altitude FLOAT8, GyroX FLOAT8, GyroY FLOAT8, GyroZ FLOAT8, Gyro_mag FLOAT8, Latitude FLOAT8, Longitude FLOAT8, Speed FLOAT8)",
+        "(uuid TEXT PRIMARY KEY, AccX FLOAT8, AccY FLOAT8 , AccZ FLOAT8,\
+        Acc_mag FLOAT8, Altitude FLOAT8, GyroX FLOAT8, GyroY FLOAT8, GyroZ \
+        FLOAT8, Gyro_mag FLOAT8, Latitude FLOAT8, Longitude FLOAT8, Speed \
+        FLOAT8)",
         "weather":
-        "(uuid TEXT PRIMARY KEY, DewPt FLOAT8, Humid FLOAT8, MxWSpd FLOAT8, Press FLOAT8, Rain FLOAT8, Sun FLOAT8, Temp_CBS FLOAT8, Temp_CL FLOAT8, WindDr FLOAT8, WindSp FLOAT8)",
+        "(uuid TEXT PRIMARY KEY, DewPt FLOAT8, Humid FLOAT8, MxWSpd FLOAT8, \
+        Press FLOAT8, Rain FLOAT8, Sun FLOAT8, Temp_CBS FLOAT8, \
+        Temp_CL FLOAT8, WindDr FLOAT8, WindSp FLOAT8)",
         "time":
-        "(uuid TEXT PRIMARY KEY, Date FLOAT8, Counter FLOAT8,Millis FLOAT8, Start TEXT, Time FLOAT8)",
+        "(uuid TEXT PRIMARY KEY, Date FLOAT8, Counter FLOAT8,Millis FLOAT8, \
+        Start TEXT, Time FLOAT8)",
         "system_status":
-        " (uuid TEXT PRIMARY KEY, BatteryVIN FLOAT8, Satellites FLOAT8, gpsUpdated FLOAT8, nAcc FLOAT8)",
+        " (uuid TEXT PRIMARY KEY, BatteryVIN FLOAT8, Satellites FLOAT8, \
+        gpsUpdated FLOAT8, nAcc FLOAT8)",
         "air_quality":
-        "(uuid TEXT PRIMARY KEY, Latitude FLOAT8,  Longitude FLOAT8, PM10 FLOAT8, PM2_5 FLOAT8)"
+        "(uuid TEXT PRIMARY KEY, Latitude FLOAT8,  Longitude FLOAT8, \
+        PM10 FLOAT8, PM2_5 FLOAT8)"
     }
 
     @classmethod
@@ -73,7 +82,8 @@ class Database:
 
 class DBConnection:
     """
-    This class is responsible for initiating the connection with the PostgreSQL database.
+    This class is responsible for initiating the connection with the 
+    PostgreSQL database.
     It provides a clean interface to perform operations on the database.
     
     Attributes:
@@ -88,26 +98,34 @@ class DBConnection:
                  host_addr="database:5432",
                  max_num_tries=20):
         """
-        Initiates a connection with the PostgreSQL database as the given user on the given port.
+        Initiates a connection with the PostgreSQL database as the given user 
+        on the given port.
 
-        This tries to connect to the database, if not it will retry with increasing waits in between.
+        This tries to connect to the database, if not it will retry with 
+        increasing waits in between.
       
 
         Args:
             db_user: the name of the user connecting to the database.
             db_password: the password of said user.
-            host_addr: (of the form <host>:<port>) the address where the database is hosted 
-            For the Postgres docker container, the default port is 5432 and the host is "database".
-            Docker resolves "database" to the internal subnet URL of the database container.
-            max_num_tries: the maximum number of tries the __init__ method should try to connect to the database for.
+            host_addr: (of the form <host>:<port>) the address where the 
+            database is hosted 
+            For the Postgres docker container, the default port is 5432 and 
+            the host is "database".
+            Docker resolves "database" to the internal subnet URL of the 
+            database container.
+            max_num_tries: the maximum number of tries the __init__ method 
+            should try to connect to the database for.
         Returns: None (since __init__)
         Raises:
             IOError: An error occurred accessing the database.
-            Raised if after the max number of tries the connection still hasn't been established.
+            Raised if after the max number of tries the connection still hasn't
+            been established.
         """
         db_name = os.environ['POSTGRES_DB']
 
-        engine_params = f"postgresql+psycopg2://{db_user}:{db_password}@{host_addr}/{db_name}"
+        engine_params = (f'postgresql+psycopg2://{db_user}:{db_password}@'
+                         f'{host_addr}/{db_name}')
         num_tries = 1
 
         while True:
@@ -128,7 +146,8 @@ class DBConnection:
 
     def create_tables(self):
         """
-        Creates the database tables based on schema definition in Database class.
+        Creates the database tables based on schema definition in Database 
+        class.
 
         Args: None
            
@@ -143,9 +162,11 @@ class DBConnection:
     def insert_backup_data(self, csv_file):
         """
         Inserts the database backup CSV data. 
-        If a unique uid for each measurement is not present, it generates one and stores it in the CSV file.
+        If a unique uid for each measurement is not present, it generates one 
+        and stores it in the CSV file.
 
-        The rows in the CSV are then inserted as records in the respective tables.
+        The rows in the CSV are then inserted as records in the respective 
+        tables.
 
         Args: 
             csv_file: the path of the CSV file
@@ -157,7 +178,7 @@ class DBConnection:
             data["uuid"] = [uuid.uuid4().hex for _ in range(data.shape[0])]
             data.to_csv(csv_file)
 
-    #CSV for each table converted to a string and copied across to the database.
+    #CSV for each table converted to a string and copied across to database.
     #Alternative could be to do Batch Insert
         for table in Database.get_columns():
             table_df = data[Database.get_columns()[table]]
@@ -179,14 +200,16 @@ class DBConnection:
         Returns: None (since commits data to database)
 
         Raises:
-            IOError: if data malformed (i.e. not a multiple of 4, so missing values)
+            IOError: if data malformed (i.e. not a multiple of 4, so missing 
+            values)
         """
         if len(data) % 4 != 0:
             raise IOError("Malformed packet data")
 
         for i in range(0, len(data), 4):
             self._cur.execute(
-                "INSERT INTO air_quality (uuid, Latitude, Longitude, PM10, PM2_5) VALUES (%s, %s, %s, %s, %s)",
+                "INSERT INTO air_quality (uuid, Latitude, Longitude, PM10,\
+                 PM2_5) VALUES (%s, %s, %s, %s, %s)",
                 (uuid.uuid4().hex, *list(data)[i:i + 4]))
         self._conn.commit()
 
@@ -197,7 +220,8 @@ class DBConnection:
 
         Args: None
            
-        Returns: List of (lists of 4 values) - this corresponds to records of (Lat, Long, PM10, PM2.5).
+        Returns: List of (lists of 4 values) - this corresponds to records of 
+        (Lat, Long, PM10, PM2.5).
         """
         self._cur.execute(
             "SELECT Latitude, Longitude, PM10, PM2_5 FROM air_quality;")
@@ -205,7 +229,8 @@ class DBConnection:
 
     def get_connection_stats(self):
         """
-       Returns the statistics for the database connection (useful for debugging). 
+       Returns the statistics for the database connection (useful for 
+       debugging). 
 
         Args: None
            
@@ -225,14 +250,15 @@ class DBConnection:
 
         Args: None
            
-        Returns: A JSON string where keys are table names and values are lists of lists.
+        Returns: A JSON string where keys are table names and values are lists 
+        of lists.
         This corresponds to the list of records in that table.
         """
         tables = {}
         self._cur.execute(
-            """SELECT table_name FROM information_schema.tables
-       WHERE table_schema = 'public'"""
-        )  # this gets an iterable collection of the public tables in the database
+            "SELECT table_name FROM information_schema.tables \
+       WHERE table_schema = 'public'"
+        )  # returns an iterable collection of public tables in the database
         for table in self._cur.fetchall():
             cur2 = self._conn.cursor()
             cur2.execute(
@@ -245,15 +271,17 @@ class DBConnection:
         """
         Clears the data stored in the database.
 
-        This is useful for bootstrap and unit tests that want to start with a fresh state.
+        This is useful for bootstrap and unit tests that want to start with a 
+        fresh state.
 
         Args: None
            
         Returns: None
         """
         self._cur.execute(
-            """SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"""
-        )  # this gets an iterable collection of the public tables in the database
+            "SELECT table_name FROM information_schema.tables WHERE \
+            table_schema = 'public'"
+        )  # returns an iterable collection of public tables in the database
         for table in self._cur.fetchall():
             cur2 = self._conn.cursor()
             cur2.execute(

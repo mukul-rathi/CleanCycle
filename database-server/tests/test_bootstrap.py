@@ -50,8 +50,10 @@ class TestBootstrap():
     def setup_method(self):
         """
         The setup method runs before every unit test.
-        It establishes a fresh start for the bootstrap procedure, clearing the data.
-        The backup CSV files are also cleared ensuring the unit tests can control which files are present during the bootstrap procedure,.
+        It establishes a fresh start for the bootstrap procedure, clearing the 
+        data.
+        The backup CSV files are also cleared ensuring the unit tests can 
+        control which files are present during the bootstrap procedure.
 
         """
         self._db = db_connection.DBConnection()
@@ -63,14 +65,16 @@ class TestBootstrap():
         """
         The teardown method runs after every unit test.
         It clears the data in database after the unit test runs.
-        This ensures the bootstrap unit tests have no shared state (independent of another).
+        This ensures the bootstrap unit tests have no shared state 
+        (independent of another).
 
         """
         self._db.clear_data()
 
     def test_bootstrap_no_files(self):
         """
-        This tests whether bootstrap creates the requisite tables, and that they have nothing in them.
+        This tests whether bootstrap creates the requisite tables, and that ]
+        they have nothing in them.
 
         """
         expected_tables = db_connection.Database.get_columns().keys()
@@ -84,7 +88,8 @@ class TestBootstrap():
 
     def test_bootstrap_with_files(self):
         """
-        This tests whether bootstrap copies the data from the backup files into the database correctly
+        This tests whether bootstrap copies the data from the backup files 
+        into the database correctly
 
         """
         TestBootstrap.copy_csv_files('/usr/src/app/src/backups/',

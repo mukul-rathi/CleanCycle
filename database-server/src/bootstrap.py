@@ -1,5 +1,6 @@
 """
-This module contains the code to run the bootstrap procedure for the endpoint and database.
+This module contains the code to run the bootstrap procedure for the endpoint
+ and database.
 
 """
 
@@ -20,9 +21,9 @@ except ModuleNotFoundError:
 def bootstrap():
     """
         Sets up the database with a clean consistent state. 
-        It creates the tables, clears any existing data and restores data from backup csvs.
+        It creates the tables, clears any existing data and restores data from 
+        backup csvs.
 
-        
         Args: None
            
         Returns: None
