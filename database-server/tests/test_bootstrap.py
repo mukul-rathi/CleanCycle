@@ -13,8 +13,6 @@ import json
 import app.src.db_connection as db_connection
 import app.src.bootstrap as bootstrap
 
-#note that Pylint disable C0103 refes to disabling the "doesn't conform to snake_case" messages.
-
 
 class TestBootstrap():
     """

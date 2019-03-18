@@ -15,8 +15,6 @@ except ModuleNotFoundError:
     import app.src.db_connection as db_connection
     import app.src.endpoint as endpoint
 
-#note that Pylint disable C0103 refes to disabling the "doesn't conform to snake_case" messages.
-
 
 def bootstrap():
     """

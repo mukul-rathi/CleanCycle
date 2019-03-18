@@ -11,9 +11,7 @@ import json
 import requests
 
 #local application imports
-import app.src.db_connection as db_connection
-
-#note that Pylint disable C0103 refes to disabling the "doesn't conform to snake_case" messages.
+from app.src import db_connection
 
 
 class TestEndpoint():
@@ -42,7 +40,7 @@ class TestEndpoint():
         Checks if connected to correct database, as correct user on the 
         correct port. 
         """
-        r = requests.get(url=self.endpoint + "/info")  #pylint: disable=C0103
+        r = requests.get(url=self.endpoint + "/info")
 
         connection_info = r.json()
 
@@ -57,7 +55,7 @@ class TestEndpoint():
         Should be a list of records that each have 4 values 
         (lat, long, pm10, pm2.5)
         """
-        r = requests.get(url=(self.endpoint + "/analytics"))  #pylint: disable=C0103
+        r = requests.get(url=(self.endpoint + "/analytics"))
         analytics = r.json()  #this returns a list of items
         for record in analytics:
             assert len(record) == 4
@@ -74,7 +72,7 @@ class TestEndpoint():
         ##
         expected_tables = db_connection.Database.get_columns().keys()
 
-        r = requests.get(url=(self.endpoint))  #pylint: disable=C0103
+        r = requests.get(url=(self.endpoint))
         tables_info = r.json()
 
         for table in expected_tables:
@@ -85,19 +83,14 @@ class TestEndpoint():
 
     def test_insert_good_sensor_data(self):
         """
-<<<<<<< HEAD:database-server/tests/test_endpoint.py
-        Checks if the endpoint processes the test-sensor-data JSON correctly and returns code 200.
-=======
         Checks if the endpoint processes the test-sensor-data JSON correctly 
         and returns code 201.
->>>>>>> 4bdd88f... Refactor code so lines < 80 characters long:tests/test_endpoint.py
         """
-        with open("test-sensor-data.json", "r") as f:  #pylint: disable=C0103
+        with open("test-sensor-data.json", "r") as f:
             sensor_data = json.load(f)
 
-        r = requests.post(  #pylint: disable=C0103
-            url=(self.endpoint + "/insertSensorData"),
-            json=sensor_data)
+        r = requests.post(
+            url=(self.endpoint + "/insertSensorData"), json=sensor_data)
 
         assert r.status_code == 201
 
@@ -108,9 +101,8 @@ class TestEndpoint():
         """
         sensor_data = {}
 
-        r = requests.post(  #pylint: disable=C0103
-            url=(self.endpoint + "/insertSensorData"),
-            json=sensor_data)
+        r = requests.post(
+            url=(self.endpoint + "/insertSensorData"), json=sensor_data)
 
         assert r.status_code == 400
 
@@ -127,26 +119,20 @@ class TestEndpoint():
             }
         }  #note not a multiple of 4
 
-        r = requests.post(  #pylint: disable=C0103
-            url=(self.endpoint + "/insertSensorData"),
-            json=sensor_data)
+        r = requests.post(
+            url=(self.endpoint + "/insertSensorData"), json=sensor_data)
 
         assert r.status_code == 400
 
     def test_insert_no_sensor_data(self):
         """
-<<<<<<< HEAD:database-server/tests/test_endpoint.py
-        Checks if the endpoint correctly handles a JSON with payload fields that are empty  and returns code 200 without crashing.
-=======
         Checks if the endpoint correctly handles a JSON with payload fields 
         that are empty  and returns code 201 without crashing.
->>>>>>> 4bdd88f... Refactor code so lines < 80 characters long:tests/test_endpoint.py
         """
         sensor_data = {"payload_fields": {}}
 
-        r = requests.post(  #pylint: disable=C0103
-            url=(self.endpoint + "/insertSensorData"),
-            json=sensor_data)
+        r = requests.post(
+            url=(self.endpoint + "/insertSensorData"), json=sensor_data)
 
         assert r.status_code == 201
 
@@ -155,11 +141,10 @@ class TestEndpoint():
         Checks if after insertion the analytics and database info are in a 
         consistent state.
         """
-        with open("test-sensor-data.json", "r") as f:  #pylint: disable=C0103
+        with open("test-sensor-data.json", "r") as f:
             sensor_data = json.load(f)
 
-        requests.post(  #pylint: disable=C0103
-            url=(self.endpoint + "/insertSensorData"),
-            json=sensor_data)
+        requests.post(
+            url=(self.endpoint + "/insertSensorData"), json=sensor_data)
         self.test_analytics_endpoint()
         self.test_database_info_endpoint()
