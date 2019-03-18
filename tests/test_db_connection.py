@@ -15,8 +15,6 @@ import pytest
 #local application imports
 from app.src import db_connection
 
-#note that Pylint disable C0103 refes to disabling the "doesn't conform to snake_case" messages.
-
 
 class TestDBConnection():
     """
@@ -83,7 +81,7 @@ class TestDBConnection():
 
         """
         self._db.insert_backup_data("test.csv")
-        df = pd.read_csv("test.csv")  #pylint: disable=C0103
+        df = pd.read_csv("test.csv")
         tables = json.loads(self._db.get_database_info())
         for table, columns in db_connection.Database.get_columns().items():
             #check that each table has the corresponding records in csv
@@ -121,7 +119,7 @@ class TestDBConnection():
         This method tests if, given good sensor data the data is parsed correctly and inserted into the database correctly.
 
         """
-        with open("test-sensor-data.json", "r") as f:  #pylint: disable=C0103
+        with open("test-sensor-data.json", "r") as f:
             sensor_data = list(json.load(f).get("payload_fields").values())
         self._db.insert_sensor_data(sensor_data)
         data_points = [
@@ -140,8 +138,8 @@ class TestDBConnection():
 
         """
         self._db.insert_backup_data("test.csv")
-        df = pd.read_csv("test.csv")  #pylint: disable=C0103
-        df = df.drop(columns=["uuid"])  #pylint: disable=C0103
+        df = pd.read_csv("test.csv")
+        df = df.drop(columns=["uuid"])
         df.to_csv("test.csv")
 
         self.test_insert_backup_data()
