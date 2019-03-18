@@ -1,14 +1,15 @@
 """
 This module contains the implementation of the endpoint.
 
-The endpoint provides a clean REST API for other sections of the project to query and modify the database.
+The endpoint provides a clean REST API for other sections of the project to 
+query and modify the database.
 
 """
 #third party imports
 from flask import Flask, request
 from flask_cors import CORS
 
-#local application imports - note can't use full package name as it varies between containers
+#local application imports
 
 try:
     import db_connection
@@ -27,7 +28,8 @@ def database_info():
         Args: None
            
         Returns: 
-            Response 200 and JSON String where values are list of records indexed by table name as key. 
+            Response 200 and JSON String where values are list of records 
+            indexed by table name as key. 
             Response 504 if database connection not possible
 
 
@@ -44,12 +46,14 @@ def database_info():
 @app.route('/info', methods=['GET'])
 def connection_stats():
     """
-        Returns the connection stats for database connection (used for debugging).
+        Returns the connection stats for database connection (used for 
+        debugging).
 
         Args: None
            
         Returns: 
-            Response 200 and JSON String of connection stats - see DBConnection class for more info. 
+            Response 200 and JSON String of connection stats - see 
+            DBConnection class for more info. 
             
             Response 504 if database connection not possible
 
@@ -70,7 +74,8 @@ def query_air_pollution_data():
         Args: None
            
         Returns: 
-            Response 200 and JSON String - List of records (Lat, Long, PM10, PM2.5).
+            Response 200 and JSON String - List of records 
+            (Lat, Long, PM10, PM2.5).
                 Again see DBConnection class for more info. 
             
             Response 504 if database connection not possible
@@ -113,8 +118,10 @@ def insert_sensor_data():
         }
 
         Payload fields:
-        JSON object where keys 0,1,2,3 correspond to (Lat, Long, PM10, PM2.5) for first measurement.
-        Subsequent measurements can be obtained by grouping subsequent keys by 4
+        JSON object where keys 0,1,2,3 correspond to 
+        (Lat, Long, PM10, PM2.5) for first measurement.
+        Subsequent measurements can be obtained by grouping subsequent keys 
+        by 4
      
 
     Args: None
@@ -122,7 +129,8 @@ def insert_sensor_data():
     Returns:
         Response 201 if data inserted successfully
         Response 400 iif data has no payload.
-        Response 400 if data payload_fields are malformed - i.e. can't be grouped as records
+        Response 400 if data payload_fields are malformed - i.e. can't be 
+        grouped as records
         Response 504 if database connection not possible
 
     """

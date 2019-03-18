@@ -37,7 +37,8 @@ class TestEndpoint():
 
     def test_connection(self):
         """
-        Checks if connected to correct database, as correct user on the correct port. 
+        Checks if connected to correct database, as correct user on the 
+        correct port. 
         """
         r = requests.get(url=self.endpoint + "/info")
 
@@ -51,7 +52,8 @@ class TestEndpoint():
     def test_analytics_endpoint(self):
         """
         Checks if the analytics data received is formatted correctly.
-        Should be a list of records that each have 4 values (lat, long, pm10, pm2.5)
+        Should be a list of records that each have 4 values 
+        (lat, long, pm10, pm2.5)
         """
         r = requests.get(url=(self.endpoint + "/analytics"))
         analytics = r.json()  #this returns a list of items
@@ -62,8 +64,10 @@ class TestEndpoint():
         """
         Checks if the database information received is formatted correctly.
         
-        Should be a JSON object with table names as keys and list of records in each table as values. 
-        Each of the list of records should be well-formatted - i.e. have the correct number of columns
+        Should be a JSON object with table names as keys and list of records 
+        in each table as values. 
+        Each of the list of records should be well-formatted - i.e. have the 
+        correct number of columns
         """
         ##
         expected_tables = db_connection.Database.get_columns().keys()
@@ -79,7 +83,8 @@ class TestEndpoint():
 
     def test_insert_good_sensor_data(self):
         """
-        Checks if the endpoint processes the test-sensor-data JSON correctly and returns code 201.
+        Checks if the endpoint processes the test-sensor-data JSON correctly 
+        and returns code 201.
         """
         with open("test-sensor-data.json", "r") as f:
             sensor_data = json.load(f)
@@ -91,7 +96,8 @@ class TestEndpoint():
 
     def test_insert_sensor_data_missing_payload(self):
         """
-        Checks if the endpoint handles a JSON with no payload fields correctly and returns code 400 without crashing.
+        Checks if the endpoint handles a JSON with no payload fields correctly 
+        and returns code 400 without crashing.
         """
         sensor_data = {}
 
@@ -102,7 +108,9 @@ class TestEndpoint():
 
     def test_insert_bad_sensor_data(self):
         """
-        Checks if the endpoint handles JSON with badly formatted payload fields correctly and returns code 400 without crashing.
+        Checks if the endpoint handles JSON with badly formatted 
+        payload fields correctly and returns code 400 without 
+        crashing.
         """
         sensor_data = {
             "payload_fields": {
@@ -118,7 +126,8 @@ class TestEndpoint():
 
     def test_insert_no_sensor_data(self):
         """
-        Checks if the endpoint correctly handles a JSON with payload fields that are empty  and returns code 201 without crashing.
+        Checks if the endpoint correctly handles a JSON with payload fields 
+        that are empty  and returns code 201 without crashing.
         """
         sensor_data = {"payload_fields": {}}
 
@@ -129,7 +138,8 @@ class TestEndpoint():
 
     def test_insert_and_query_analytics_and_database(self):
         """
-        Checks if after insertion the analytics and database info are in a consistent state.
+        Checks if after insertion the analytics and database info are in a 
+        consistent state.
         """
         with open("test-sensor-data.json", "r") as f:
             sensor_data = json.load(f)

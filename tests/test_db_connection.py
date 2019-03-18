@@ -35,7 +35,8 @@ class TestDBConnection():
     @staticmethod
     def check_row_equality(row1, row2):
         """
-            This function tests if two rows are equal, comparing float values within range of tolerance to account for rounding error.
+            This function tests if two rows are equal, comparing float values 
+            within range of tolerance to account for rounding error.
 
             Args:
                 row1: The first row to compare
@@ -59,7 +60,8 @@ class TestDBConnection():
     def setup_method(self):
         """
         The setup method runs before every unit test.
-        It establishes a fresh connection to the database and clears the data in database.
+        It establishes a fresh connection to the database and clears the data 
+        in database.
         This ensures unit tests have no shared state (independent of another).
 
         """
@@ -77,7 +79,8 @@ class TestDBConnection():
 
     def test_insert_backup_data(self):
         """
-        This method tests if the insert back-up data does correctly insert the data in the CSV file.
+        This method tests if the insert back-up data does correctly insert the
+        data in the CSV file.
 
         """
         self._db.insert_backup_data("test.csv")
@@ -95,7 +98,8 @@ class TestDBConnection():
 
     def test_create_tables(self):
         """
-        This method tests if all the tables in the database schema have been created.
+        This method tests if all the tables in the database schema have been 
+        created.
 
         """
         self._db.create_tables()
@@ -106,7 +110,8 @@ class TestDBConnection():
 
     def test_clear_data(self):
         """
-        This method clears the database and iterates through tables to ensure no data left.
+        This method clears the database and iterates through tables to ensure 
+        no data left.
 
         """
         self._db.clear_data()
@@ -116,7 +121,8 @@ class TestDBConnection():
 
     def test_insert_sensor_data(self):
         """
-        This method tests if, given good sensor data the data is parsed correctly and inserted into the database correctly.
+        This method tests if, given good sensor data the data is parsed 
+        correctly and inserted into the database correctly.
 
         """
         with open("test-sensor-data.json", "r") as f:
@@ -134,7 +140,8 @@ class TestDBConnection():
 
     def test_insert_backup_data_without_uuid(self):
         """
-        This method tests if the insert back-up data does correctly add a uuid and then  insert the data in the CSV file.
+        This method tests if the insert back-up data does correctly add a uuid 
+        and then insert the data in the CSV file.
 
         """
         self._db.insert_backup_data("test.csv")
@@ -146,7 +153,8 @@ class TestDBConnection():
 
     def test_connection_stats(self):
         """
-        Checks if connected to correct database, as correct user on the correct port. 
+        Checks if connected to correct database, as correct user on the correct
+         port. 
         """
         connection_info = json.loads(self._db.get_connection_stats())
 
@@ -168,7 +176,8 @@ class TestDBConnection():
     @staticmethod
     def test_bad_database_connection():
         """
-        Tests if an IOError is raised after the max number of retries is exceeded when connecting to a database.
+        Tests if an IOError is raised after the max number of retries is 
+        exceeded when connecting to a database.
 
         Uses dependency injection (mocks a database address)
         """
